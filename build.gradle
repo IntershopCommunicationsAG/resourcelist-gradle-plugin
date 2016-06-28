@@ -230,7 +230,7 @@ pluginBundle {
         }
     }
     plugins {
-        cartridge-resourcelist {
+        cartridgeresourcelist {
             id = 'com.intershop.gradle.cartridge-resourcelist'
             displayName = 'Gradle Intershop cartridge resourcelist plugin'
         }
