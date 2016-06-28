@@ -1,0 +1,96 @@
+= ResourceList and Cartridge ResourceList Plugin
+:latestRevision: 1.0.0
+:toc:
+
+== Summary
+This resourcelist plugin generates, based on existing java source files and resources, a file with the listing of these resources.
+The cartridge-resourcelist plugin generates two specific files. This configuration is provided to the resourcelist plugin.
+
+== Usage Base-ResourceList Plugin
+[source,groovy,subs="attributes"]
+----
+plugins {
+    id 'com.intershop.gradle.resourcelist' version '{latestRevision}'
+}
+
+resourcelist {
+    lists {
+        orm {
+            sourceSetName = 'main'
+            include '**/**/*.orm'
+            resourceListFilePath = "resources/\${project.name}/orm/orm.resource"
+            fileExtension = 'orm'
+        }
+        pipelets {
+            sourceSetName = 'main'
+            include '**/pipelet/**/*.xml'
+            exclude '**/*_??_??.xml'
+            resourceListFilePath = "resources/\${project.name}/pipeline/pipelets.resource"
+            fileExtension = 'xml'
+        }
+    }
+}
+----
+The resource list task creates a list of classes, that match to the filter configuration.
+
+== Usage ResourceList Plugin
+[source,groovy,subs="attributes"]
+----
+plugins {
+    id 'com.intershop.gradle.cartridge-resourcelist' version '{latestRevision}'
+}
+----
+The cartridge-resourcelist plugin adds two configurations for Intershop orm files and Intershop pipelet files.
+
+IMPORTANT: The JavaBasePlugin must be applied to the project for this plugin, otherwise the functionality is not available.
+
+== Tasks
+The resourcelist plugins add a resource list task for each configuration. The resource process task depends on all
+resource list tasks of a project.
+
+[cols="25%,30%,45%", width="95%, options="header"]
+|===
+|Task name  |Type             |Description
+|resourceList<configuration name>   | com.intershop.build.jaxb.task.ResourceListFileTask | This task generates resource list files for special java sources.
+|===
+
+The resource list plugin provides two special tasks
+[cols="25%,30%,45%", width="95%, options="header"]
+|===
+|Task name              |Type                                                |Description
+|resourceListOrm        | com.intershop.build.jaxb.task.ResourceListFileTask | This task generates resource list files for orm configurationes.
+|resourceListPipelets   | com.intershop.build.jaxb.task.ResourceListFileTask | This task generates resource list files for pipelet classes.
+|===
+
+== Project Extension 'resourcelist'
+This plugin adds an extension *`resourcelist`* to the project.
+
+=== Methods
+[cols="17%,17%,17%,49%", width="90%, options="header"]
+|===
+|Method       | Type                          | Default value | Description
+|lists          | <<lists, ListsConfiguration>> |               | This contains all source list configurations.
+|===
+
+==== [[lists]]Object 'lists' (ListsConfiguration)
+ListsConfiguration extends https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/util/PatternSet.html[PatternSet]
+
+[cols="17%,17%,15%,51%", width="90%, options="header"]
+|===
+|Property | Type | Default value | Description
+
+|*fileExtension*        | `String` | Name of the list configuration | Extension of the analysed files
+|*resourceListFilePath* | `String` | ''                             | Path for the resource file.
+|*outputDir*            | `File`   |'generated/resourcelist/<configuration name> | Output directory for the generated code
+|*sourceSetName*        | `String` | 'main' | Source set name with analysed sources.
+|===
+
+== License
+
+Copyright 2014-2016 Intershop Communications.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
