@@ -41,10 +41,10 @@ class ResourceListFileTask extends DefaultTask {
     @Input
     String resourceListFilePath
 
-    @Internal
+    @OutputDirectory
     File outputDirectory
 
-    @OutputFile
+    @Internal
     File getOutputFile() {
         return new File(getOutputDirectory(), getResourceListFilePath())
     }

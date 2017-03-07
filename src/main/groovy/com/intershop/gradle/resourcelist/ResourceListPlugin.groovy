@@ -70,8 +70,8 @@ class ResourceListPlugin implements Plugin<Project> {
                 String srcSourceSetName = config.getSourceSetName() ?: SourceSet.MAIN_SOURCE_SET_NAME
                 SourceSet sourceSet = project.convention.getPlugin(JavaPluginConvention.class).sourceSets.findByName(srcSourceSetName)
                 if(sourceSet != null) {
-                    if(! sourceSet.resources.srcDirs.contains(task.getOutputDirectory())) {
-                        sourceSet.resources.srcDir(task.getOutputDirectory())
+                    if(! sourceSet.resources.srcDirs.contains(task.getOutputs().getFiles().first())) {
+                        sourceSet.resources.srcDir(task.getOutputs().getFiles().first())
                     }
                     project.tasks.getByName(sourceSet.processResourcesTaskName).dependsOn(task)
                 }
