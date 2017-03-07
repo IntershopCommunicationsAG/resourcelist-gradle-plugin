@@ -16,12 +16,12 @@
 
 
 package com.intershop.gradle.resourcelist
+
 import com.intershop.gradle.resourcelist.extension.ListConfiguration
-import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import com.intershop.gradle.resourcelist.extension.ResourceListExtension
+import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.file.FileTree
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
@@ -49,11 +49,9 @@ class ResourceListPlugin implements Plugin<Project> {
             task.group = ResourceListExtension.RESOURCELIST_TASK_GROUP
 
             task.conventionMapping.source = {
-                FileTree tree = null
-
                 String srcSourceSetName = config.getSourceSetName() ?: SourceSet.MAIN_SOURCE_SET_NAME
                 SourceSet sourceSet = project.convention.getPlugin(JavaPluginConvention.class).sourceSets.findByName(srcSourceSetName)
-                project.files(sourceSet.getAllSource().getSrcDirs()).asFileTree.matching {
+                return project.files(sourceSet.getAllSource().getSrcDirs()).asFileTree.matching {
                     if (config.getIncludes()) {
                         include config.getIncludes()
                     }
@@ -72,8 +70,8 @@ class ResourceListPlugin implements Plugin<Project> {
                 String srcSourceSetName = config.getSourceSetName() ?: SourceSet.MAIN_SOURCE_SET_NAME
                 SourceSet sourceSet = project.convention.getPlugin(JavaPluginConvention.class).sourceSets.findByName(srcSourceSetName)
                 if(sourceSet != null) {
-                    if(! sourceSet.resources.srcDirs.contains(task.getOutputDirectory())) {
-                        sourceSet.resources.srcDir(task.getOutputDirectory())
+                    if(! sourceSet.resources.srcDirs.contains(task.getOutputs().getFiles().first())) {
+                        sourceSet.resources.srcDir(task.getOutputs().getFiles().first())
                     }
                     project.tasks.getByName(sourceSet.processResourcesTaskName).dependsOn(task)
                 }

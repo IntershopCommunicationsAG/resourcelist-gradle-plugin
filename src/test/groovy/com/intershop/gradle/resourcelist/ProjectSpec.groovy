@@ -83,6 +83,24 @@ class ProjectSpec extends AbstractIntegrationSpec {
         resourceFile.exists()
         contentExists
 
+        when:
+        def resultJar2 = getPreparedGradleRunner()
+                .withArguments(jarArgs)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then:
+        resultJar2.task(":resourceListOrm").outcome == TaskOutcome.SUCCESS
+
+        when:
+        def resultJar3 = getPreparedGradleRunner()
+                .withArguments(jarArgs)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then:
+        resultJar3.task(":resourceListOrm").outcome == TaskOutcome.UP_TO_DATE
+
         where:
         gradleVersion << supportedGradleVersions
     }
