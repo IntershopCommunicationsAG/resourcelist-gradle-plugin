@@ -79,6 +79,8 @@ class ResourceListFileTask extends DefaultTask {
                     targetFile << '\n'
                 }
             }
+        } else {
+            project.logger.info('Filetree is empty for {}', getResourceListFilePath())
         }
     }
 }
