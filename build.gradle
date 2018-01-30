@@ -18,29 +18,27 @@ plugins {
     // project plugins
     id 'java-gradle-plugin'
     id 'groovy'
+
     // test coverage
     id 'jacoco'
 
     // ide plugin
     id 'idea'
 
-    // intershop test plugin
-    id 'com.intershop.gradle.test' version '2.2.0'
-
-    // plugin for documentation
-    id 'org.asciidoctor.convert' version '1.5.3'
-
     // publish plugin
     id 'maven-publish'
 
     // intershop version plugin
-    id 'com.intershop.gradle.scmversion' version '2.3.4'
+    id 'com.intershop.gradle.scmversion' version '3.4.0'
+
+    // plugin for documentation
+    id 'org.asciidoctor.convert' version '1.5.3'
 
     // plugin for publishing to Gradle Portal
-    id 'com.gradle.plugin-publish' version '0.9.7'
+    id 'com.gradle.plugin-publish' version '0.9.9'
 
     // plugin for publishing to jcenter
-    id 'com.jfrog.bintray' version '1.7.3'
+    id 'com.jfrog.bintray' version '1.8.0'
 }
 
 scm {
@@ -53,8 +51,24 @@ group 'com.intershop.gradle.resourcelist'
 description 'Gradle resourcelist plugins'
 version = scm.version.version
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+gradlePlugin {
+    plugins {
+        resourcelistPlugin {
+            id = 'com.intershop.gradle.resourcelist'
+            implementationClass = 'com.intershop.gradle.resourcelist.ResourceListPlugin'
+        }
+        cartridgeResourcelistPlugin {
+            id = 'com.intershop.gradle.cartridge-resourcelist'
+            implementationClass = 'com.intershop.gradle.resourcelist.CartridgeResourceListPlugin'
+        }
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+sourceSets.main.java.srcDirs = []
+sourceSets.main.groovy.srcDirs += ['src/main/java']
 
 // set correct project status
 if (project.version.endsWith('-SNAPSHOT')) {
@@ -63,7 +77,7 @@ if (project.version.endsWith('-SNAPSHOT')) {
 
 test {
     // Gradle versions for test
-    systemProperty 'intershop.gradle.versions', '2.11, 3.4'
+    systemProperty 'intershop.gradle.versions', '4.5'
 }
 
 task copyAsciiDoc {
@@ -160,7 +174,7 @@ publishing {
             }
 
             pom.withXml {
-                def Node root = asNode();
+                Node root = asNode()
                 root.appendNode('name', project.name)
                 root.appendNode('description', project.description)
                 root.appendNode('url', "https:/gitlab.intershop.de/IntershopGradlePlugins/${project.name}")
@@ -173,7 +187,7 @@ publishing {
                 org.appendNode( 'name', 'Intershop Communications' )
                 org.appendNode( 'url', 'http://intershop.com' )
 
-                def license = root.appendNode( 'licenses' ).appendNode( 'license' );
+                def license = root.appendNode( 'licenses' ).appendNode( 'license' )
                 license.appendNode( 'name', 'Apache License, Version 2.0' )
                 license.appendNode( 'url', 'http://www.apache.org/licenses/LICENSE-2.0' )
                 license.appendNode( 'distribution', 'repo' )
@@ -222,23 +236,24 @@ pluginBundle {
     tags = ['intershop', 'gradle', 'plugin', 'build', 'resourcelist', 'cartridge']
 
     plugins {
-        resourcelist {
-            id = 'com.intershop.gradle.resourcelist'
+        resourcelistPlugin {
+            id = gradlePlugin.plugins.resourcelistPlugin.id
             displayName = 'Gradle resourcelist plugin'
         }
     }
     plugins {
-        cartridgeresourcelist {
-            id = 'com.intershop.gradle.cartridge-resourcelist'
+        cartridgeResourcelistPlugin {
+            id = gradlePlugin.plugins.cartridgeResourcelistPlugin.id
             displayName = 'Gradle Intershop cartridge resourcelist plugin'
         }
     }
 }
 
 dependencies {
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4'){
-        exclude group: 'org.codehaus.groovy'
-    }
+    compileOnly 'org.jetbrains:annotations:15.0'
+
+    testCompile 'com.intershop.gradle.test:test-gradle-plugin:3.0.0'
+    testCompile gradleTestKit()
 }
 
 repositories {

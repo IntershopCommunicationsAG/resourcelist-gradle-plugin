@@ -90,7 +90,7 @@ class ProjectSpec extends AbstractIntegrationSpec {
                 .build()
 
         then:
-        resultJar2.task(":resourceListOrm").outcome == TaskOutcome.SUCCESS
+        resultJar2.task(":resourceListOrm").outcome == TaskOutcome.UP_TO_DATE
 
         when:
         def resultJar3 = getPreparedGradleRunner()
@@ -453,7 +453,7 @@ class ProjectSpec extends AbstractIntegrationSpec {
                     orm {
                         sourceSetName = 'main'
                         include '**/**/*.orm'
-                        resourceListFilePath = "resources/\${project.name}/orm/orm.resource"
+                        resourceListFileName = "resources/\${project.name}/orm/orm.resource"
                         fileExtension = 'orm'
                     }
                 }
@@ -525,14 +525,14 @@ class ProjectSpec extends AbstractIntegrationSpec {
                     orm {
                         sourceSetName = 'main'
                         include '**/**/*.orm'
-                        resourceListFilePath = "resources/\${project.name}/orm/orm.resource"
+                        resourceListFileName = "resources/\${project.name}/orm/orm.resource"
                         fileExtension = 'orm'
                     }
                     pipelets {
                         sourceSetName = 'main'
                         include '**/pipelet/**/*.xml'
                         exclude '**/*_??_??.xml'
-                        resourceListFilePath = "resources/\${project.name}/pipeline/pipelets.resource"
+                        resourceListFileName = "resources/\${project.name}/pipeline/pipelets.resource"
                         fileExtension = 'xml'
                     }
                 }

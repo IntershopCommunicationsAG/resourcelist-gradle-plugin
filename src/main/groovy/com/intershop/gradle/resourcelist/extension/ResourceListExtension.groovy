@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-
 package com.intershop.gradle.resourcelist.extension
 
+import groovy.transform.CompileStatic
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 
+@CompileStatic
 class ResourceListExtension {
 
     /**
      * Extension name
      */
-    final static String RESOURCELIST_EXTENSION_NAME = 'resourcelist'
+    public final static String RESOURCELIST_EXTENSION_NAME = 'resourcelist'
 
     /**
      * Extension name
      */
-    final static String RESOURCELIST_OUTPUTPATH = 'resourcelist'
+    public final static String RESOURCELIST_OUTPUTPATH = 'resourcelist'
 
     /**
      * Task group name
      */
-    final static String RESOURCELIST_TASK_GROUP = 'resource list generation'
+    public final static String RESOURCELIST_TASK_GROUP = 'resource list generation'
 
     /**
      * Container for list generation configurations
@@ -44,13 +44,14 @@ class ResourceListExtension {
 
     private Project project
 
-    public ResourceListExtension(Project project) {
-
+    ResourceListExtension(Project project) {
         this.project = project
-
-        lists = project.container(ListConfiguration)
+        lists = project.container(ListConfiguration, new ListConfigurationFactory(project))
     }
 
+    /**
+     * Container for all resource list configurations
+     */
     def lists(Closure c) {
         lists.configure(c)
     }
