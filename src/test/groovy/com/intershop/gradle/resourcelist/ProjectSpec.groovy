@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Intershop Communications AG.
+ * Copyright 2018 Intershop Communications AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intershop.gradle.resourcelist
 
-import com.intershop.gradle.test.AbstractIntegrationSpec
+import com.intershop.gradle.test.AbstractIntegrationGroovySpec
 import org.gradle.testkit.runner.TaskOutcome
 
-class ProjectSpec extends AbstractIntegrationSpec {
+class ProjectSpec extends AbstractIntegrationGroovySpec {
 
     File settingsGradle
 
@@ -90,7 +90,7 @@ class ProjectSpec extends AbstractIntegrationSpec {
                 .build()
 
         then:
-        resultJar2.task(":resourceListOrm").outcome == TaskOutcome.SUCCESS
+        resultJar2.task(":resourceListOrm").outcome == TaskOutcome.UP_TO_DATE
 
         when:
         def resultJar3 = getPreparedGradleRunner()
@@ -182,6 +182,103 @@ class ProjectSpec extends AbstractIntegrationSpec {
             }
 
             version = '1.0.0'
+
+            repositories {
+                mavenCentral()
+            }
+        """.stripIndent()
+
+        when:
+        List<String> args = ['tasks', '--all', '-s']
+
+        def result = getPreparedGradleRunner()
+                .withArguments(args)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        then:
+        result.output.contains('resourceListOrm')
+        result.output.contains('resourceListPipelets')
+        result.output.contains('Resource list generation')
+
+        when:
+        List<String> jarArgs = ['jar', '-s']
+
+        def resultJar = getPreparedGradleRunner()
+                .withArguments(jarArgs)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        //check resource file
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
+
+        boolean contentExists = true
+        boolean addContentExists = false
+        if(resourceOrmFile.exists()) {
+            String contentOrmTxt = resourceOrmFile.text
+            (1..5).each {
+                contentExists &= contentOrmTxt.contains("com.corporate.build.test.file${it}")
+            }
+        }
+        if(resourcePipeletsFile.exists()) {
+            String contentPipeletsTxt = resourcePipeletsFile.text
+            (1..5).each {
+                contentExists &= contentPipeletsTxt.contains("com.corporate.build.pipelet.test.file${it}")
+            }
+            (1..5).each {
+                addContentExists |= contentPipeletsTxt.contains("com.corporate.build.pipelet.test.exfile${it}_de_de.xml")
+            }
+        }
+
+        File jarFile = new File(testProjectDir, 'build/libs/resourcelisttest-1.0.0.jar')
+
+        then:
+        resultJar.output.contains(':resourceListOrm')
+        resultJar.output.contains(':resourceListPipelets')
+        resourceOrmFile.exists()
+        resourcePipeletsFile.exists()
+        jarFile.exists()
+        contentExists
+        !addContentExists
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
+
+    def 'Test orm and pipelet resource file generation with custom source dir'() {
+        given:
+        createStandardTestOrmContent()
+        createStandardTestPipeletsContent()
+
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'com.intershop.gradle.cartridge-resourcelist'
+            }
+            
+            version = '1.0.0'
+
+            sourceSets {
+                main {
+                    java {
+                        srcDir('javasources')
+                        include '**/**/*.java'
+                    }
+                    resources {
+                        srcDir('javasources')
+                        exclude '**/**/*.java'
+                    }
+                }
+                test {
+                    java {
+                        srcDir('javasources')
+                        include 'tests/**/**'
+                        exclude 'tests/server/**/*.java'
+                    }
+                }
+            }
 
             repositories {
                 mavenCentral()
@@ -356,7 +453,7 @@ class ProjectSpec extends AbstractIntegrationSpec {
                     orm {
                         sourceSetName = 'main'
                         include '**/**/*.orm'
-                        resourceListFilePath = "resources/\${project.name}/orm/orm.resource"
+                        resourceListFileName = "resources/\${project.name}/orm/orm.resource"
                         fileExtension = 'orm'
                     }
                 }
@@ -428,14 +525,14 @@ class ProjectSpec extends AbstractIntegrationSpec {
                     orm {
                         sourceSetName = 'main'
                         include '**/**/*.orm'
-                        resourceListFilePath = "resources/\${project.name}/orm/orm.resource"
+                        resourceListFileName = "resources/\${project.name}/orm/orm.resource"
                         fileExtension = 'orm'
                     }
                     pipelets {
                         sourceSetName = 'main'
                         include '**/pipelet/**/*.xml'
                         exclude '**/*_??_??.xml'
-                        resourceListFilePath = "resources/\${project.name}/pipeline/pipelets.resource"
+                        resourceListFileName = "resources/\${project.name}/pipeline/pipelets.resource"
                         fileExtension = 'xml'
                     }
                 }
@@ -522,6 +619,29 @@ class ProjectSpec extends AbstractIntegrationSpec {
         }
         (1..5).each {
             File f = file("src/main/java/com/corporate/build/pipelet/test/exfile${it}_de_de.xml")
+            f << """TestFile ${it}
+            """.stripIndent()
+        }
+    }
+
+    void createCustomTestOrmContent() {
+        writeJavaTestClass('com.corporate.build.orm.test')
+        (1..5).each {
+            File f = file("javasources/com/corporate/build/test/file${it}.orm")
+            f << """TestFile ${it}
+            """.stripIndent()
+        }
+    }
+
+    void createCustomTestPipeletsContent() {
+        writeJavaTestClass('com.corporate.build.pipelet.test')
+        (1..5).each {
+            File f = file("javasources/com/corporate/build/pipelet/test/file${it}.xml")
+            f << """TestFile ${it}
+            """.stripIndent()
+        }
+        (1..5).each {
+            File f = file("javasources/com/corporate/build/pipelet/test/exfile${it}_de_de.xml")
             f << """TestFile ${it}
             """.stripIndent()
         }
