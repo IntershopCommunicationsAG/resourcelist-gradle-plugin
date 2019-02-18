@@ -157,7 +157,7 @@ class ListConfiguration implements Named {
         this.project = project
         this.name = name
 
-        outputDir = project.layout.directoryProperty()
+        outputDir = project.objects.directoryProperty()
         outputDir.set(project.layout.buildDirectory.dir("generated/${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/${name.replace(' ', '_')}"))
 
         resourceListFileName = project.objects.property(String)

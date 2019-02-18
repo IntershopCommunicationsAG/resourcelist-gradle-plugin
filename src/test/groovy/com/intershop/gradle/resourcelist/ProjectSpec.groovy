@@ -15,10 +15,10 @@
  */
 package com.intershop.gradle.resourcelist
 
-import com.intershop.gradle.test.AbstractIntegrationSpec
+import com.intershop.gradle.test.AbstractIntegrationGroovySpec
 import org.gradle.testkit.runner.TaskOutcome
 
-class ProjectSpec extends AbstractIntegrationSpec {
+class ProjectSpec extends AbstractIntegrationGroovySpec {
 
     File settingsGradle
 

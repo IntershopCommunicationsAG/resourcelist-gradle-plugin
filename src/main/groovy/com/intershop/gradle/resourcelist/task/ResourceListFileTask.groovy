@@ -161,7 +161,7 @@ class ResourceListFileTask extends DefaultTask {
         return sourceFiles
     }
 
-    final DirectoryProperty outputDir = project.layout.directoryProperty()
+    final DirectoryProperty outputDir = project.objects.directoryProperty()
 
     /**
      * The ouput directory of this task.
