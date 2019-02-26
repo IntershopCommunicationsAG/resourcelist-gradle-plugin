@@ -19,17 +19,15 @@ import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.SetProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
@@ -134,31 +132,43 @@ class ResourceListFileTask extends DefaultTask {
      * Returns the source for this task, after the include and exclude patterns
      * have been applied. Ignores source files which do not exist.
      */
-    final ConfigurableFileCollection sourceFiles = project.files()
+    final SetProperty<String> sourcePaths = project.objects.setProperty(String)
 
-    @InputFiles
-    FileCollection getSourceFiles() {
+    @Input
+    Set<String> getSourcePaths() {
         JavaPluginConvention javaPluginConvention = project.getConvention().getPlugin(JavaPluginConvention.class)
         if(! javaPluginConvention) {
             throw new GradleException('It is necessary to apply a Java plugin! (The JavaPluginConvention is missing.)')
         }
         SourceSet sourceSet = javaPluginConvention.getSourceSets().findByName(getSourceSetName())
 
+        HashSet<String> tempSet = new HashSet<String>()
+
         if(sourceSet != null) {
-            for(File srcdir: sourceSet.getAllJava().getSrcDirs()) {
-                sourceFiles.from(project.fileTree(srcdir, new Action<ConfigurableFileTree>() {
+
+            for(File srcdir: (sourceSet.getResources().srcDirs + sourceSet.getAllSource().srcDirs)) {
+                Set<File> fileSet = project.fileTree(srcdir, new Action<ConfigurableFileTree>() {
                     @Override
                     void execute(ConfigurableFileTree files) {
                         files.setIncludes(getIncludes())
                         files.setExcludes(getExcludes())
                     }
-                }).getFiles())
+                }).getFiles()
+
+                for(File file: fileSet) {
+                    if(! file.isDirectory()) {
+                        tempSet.add(file.path.substring(srcdir.path.length().intValue() + 1))
+                    }
+                }
             }
+
+            sourcePaths.addAll(tempSet)
+
         } else {
             throw new GradleException("The specified sourceset ${getSourceSetName()} does not exist.")
         }
 
-        return sourceFiles
+        return sourcePaths.get()
     }
 
     final DirectoryProperty outputDir = project.objects.directoryProperty()
@@ -186,18 +196,18 @@ class ResourceListFileTask extends DefaultTask {
         project.delete(targetFile)
 
         //set content
-        if(! getSourceFiles().isEmpty()) {
+        if(! sourcePaths.get().isEmpty()) {
             targetFile.getParentFile().mkdirs()
             targetFile.createNewFile()
 
-            for(File file: getSourceFiles()) {
-                if(! file.isDirectory()) {
-                    logger.debug('"{}" will be added.', "${file.getPath()} - \\. ${getFileExtension()}")
-                    targetFile << file.path.replaceAll('\\\\', '/')\
+            for(String path: getSourcePaths()) {
+
+                    logger.debug('"{}" will be added.', "${path} - \\. ${getFileExtension()}")
+                    targetFile << path.replaceAll('\\\\', '/')\
                                                  .replaceFirst("\\." + getFileExtension() + "\$", '')\
                                                  .replaceAll("/", ".")
                     targetFile << '\n'
-                }
+
             }
         } else {
             project.logger.info('Collection of files is empty for {}', getName())

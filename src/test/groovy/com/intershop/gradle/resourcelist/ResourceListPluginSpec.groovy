@@ -37,18 +37,4 @@ class ResourceListPluginSpec extends AbstractProjectSpec {
         then:
         project.extensions.getByName(ResourceListExtension.RESOURCELIST_EXTENSION_NAME)
     }
-/**
-    def 'should add default tasks from orm and pipelet config'() {
-        when:
-        javaPlugin.apply(project)
-        plugin.apply(project)
-
-        then:
-        project.extensions.getByName(ResourceListExtension.RESOURCELIST_EXTENSION_NAME).lists.orm
-        project.extensions.getByName(ResourceListExtension.RESOURCELIST_EXTENSION_NAME).lists.pipelets
-
-        project.tasks.findByName('resourceListOrm')
-        project.tasks.findByName('resourceListPipelets')
-    }
- **/
 }
