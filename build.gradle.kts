@@ -1,6 +1,5 @@
 import com.jfrog.bintray.gradle.BintrayExtension
-import org.asciidoctor.gradle.AsciidoctorExtension
-import org.asciidoctor.gradle.AsciidoctorTask
+import org.asciidoctor.gradle.jvm.AsciidoctorTask
 import java.util.Date
 
 /*
@@ -33,10 +32,10 @@ plugins {
     `maven-publish`
 
     // intershop version plugin
-    id("com.intershop.gradle.scmversion") version "4.1.0"
+    id("com.intershop.gradle.scmversion") version "6.0.0"
 
     // plugin for documentation
-    id("org.asciidoctor.convert") version "1.5.10"
+    id("org.asciidoctor.jvm.convert") version "2.3.0"
 
     // plugin for publishing to Gradle Portal
     id("com.gradle.plugin-publish") version "0.10.1"
@@ -86,7 +85,7 @@ java {
 }
 
 sourceSets.main {
-    java.setSrcDirs(emptyList())
+    java.setSrcDirs(listOf<String>())
     withConvention(GroovySourceSet::class) {
         groovy.setSrcDirs(mutableListOf("src/main/groovy", "src/main/java"))
     }
@@ -97,13 +96,9 @@ if (project.version.toString().endsWith("-SNAPSHOT")) {
     status = "snapshot'"
 }
 
-configure<AsciidoctorExtension> {
-    noDefaultRepositories = true
-}
-
 tasks {
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "5.2")
+        systemProperty("intershop.gradle.versions", "5.6.4, 6.0")
 
         if(project.hasProperty("repoURL") && project.hasProperty("repoUser") && project.hasProperty("repoPasswd")) {
             systemProperty("repo_url_config", project.property("repoURL").toString())
@@ -118,9 +113,10 @@ tasks {
         includeEmptyDirs = false
 
         val outputDir = file("$buildDir/tmp/asciidoctorSrc")
-        val inputFiles = fileTree(mapOf("dir" to rootDir,
-                "include" to listOf("**/*.asciidoc"),
-                "exclude" to listOf("build/**")))
+        val inputFiles = fileTree(rootDir) {
+            include("**/*.asciidoc")
+            exclude("build/**")
+        }
 
         inputs.files.plus( inputFiles )
         outputs.dir( outputDir )
@@ -136,12 +132,15 @@ tasks {
     withType<AsciidoctorTask> {
         dependsOn("copyAsciiDoc")
 
-        sourceDir = file("$buildDir/tmp/asciidoctorSrc")
+        setSourceDir(file("$buildDir/tmp/asciidoctorSrc"))
         sources(delegateClosureOf<PatternSet> {
             include("README.asciidoc")
         })
 
-        backends("html5", "docbook")
+        outputOptions {
+            setBackends(listOf("html5", "docbook"))
+        }
+
         options = mapOf( "doctype" to "article",
                 "ruby"    to "erubis")
         attributes = mapOf(
@@ -171,8 +170,6 @@ tasks {
     getByName("bintrayUpload")?.dependsOn("asciidoctor")
     getByName("jar")?.dependsOn("asciidoctor")
 
-
-
     register<Jar>("sourceJar") {
         description = "Creates a JAR that contains the source code."
 
@@ -195,11 +192,11 @@ publishing {
             artifact(tasks.getByName("sourceJar"))
             artifact(tasks.getByName("javaDoc"))
 
-            artifact(File(buildDir, "asciidoc/html5/README.html")) {
+            artifact(File(buildDir, "docs/asciidoc/html5/README.html")) {
                 classifier = "reference"
             }
 
-            artifact(File(buildDir, "asciidoc/docbook/README.xml")) {
+            artifact(File(buildDir, "docs/asciidoc/docbook/README.xml")) {
                 classifier = "docbook"
             }
 
@@ -259,7 +256,7 @@ bintray {
 dependencies {
     compileOnly("org.jetbrains:annotations:17.0.0")
 
-    testImplementation("com.intershop.gradle.test:test-gradle-plugin:3.1.0-dev.2")
+    testImplementation("com.intershop.gradle.test:test-gradle-plugin:3.4.0")
     testImplementation(gradleTestKit())
 }
 
