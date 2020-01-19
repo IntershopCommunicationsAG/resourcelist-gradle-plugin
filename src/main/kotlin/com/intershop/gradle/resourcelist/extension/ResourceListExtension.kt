@@ -47,5 +47,5 @@ abstract class ResourceListExtension {
      *
      * @property lists
      */
-    val lists: NamedDomainObjectContainer<ListConfiguration>? = objectFactory.domainObjectContainer(ListConfiguration::class.java)
+    val lists: NamedDomainObjectContainer<ListConfiguration> = objectFactory.domainObjectContainer(ListConfiguration::class.java)
 }
