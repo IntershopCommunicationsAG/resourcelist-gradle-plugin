@@ -15,10 +15,10 @@
  */
 package com.intershop.gradle.resourcelist
 
-import com.intershop.gradle.test.AbstractIntegrationGroovySpec
+import com.intershop.gradle.test.AbstractIntegrationKotlinSpec
 import org.gradle.testkit.runner.TaskOutcome
 
-class ProjectSpec extends AbstractIntegrationGroovySpec {
+class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
 
     def 'Test orm resource file generation'() {
         given:
@@ -30,11 +30,11 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.cartridge-resourcelist'
+                `java`
+                id("com.intershop.gradle.cartridge-resourcelist")
             }
 
-            version = '1.0.0'
+            version = "1.0.0"
 
             repositories {
                 mavenCentral()
@@ -109,11 +109,11 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.cartridge-resourcelist'
+                `java`
+                id("com.intershop.gradle.cartridge-resourcelist")
             }
-
-            version = '1.0.0'
+            
+            version = "1.0.0"
 
             repositories {
                 mavenCentral()
@@ -179,11 +179,11 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.cartridge-resourcelist'
+                `java`
+                id("com.intershop.gradle.cartridge-resourcelist")
             }
 
-            version = '1.0.0'
+            version = "1.0.0"
 
             repositories {
                 mavenCentral()
@@ -257,11 +257,11 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
 
         String buildcontent = """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.cartridge-resourcelist'
+                `java`
+                id("com.intershop.gradle.cartridge-resourcelist")
             }
 
-            version = '1.0.0'
+            version = "1.0.0"
 
             repositories {
                 mavenCentral()
@@ -301,9 +301,6 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
         //check resource file
         File resourceOrmFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/orm/resources/testCartridge1/orm/orm.resource')
         File resourcePipeletsFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/pipelets/resources/testCartridge1/pipeline/pipelets.resource')
-        File resourceOrmFile2 = new File(testProjectDir, 'testCartridge2/build/generated/resourcelist/orm/resources/testCartridge2/orm/orm.resource')
-        File resourcePipeletsFile2 = new File(testProjectDir, 'testCartridge2/build/generated/resourcelist/pipelets/resources/testCartridge2/pipeline/pipelets.resource')
-
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -348,28 +345,28 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.cartridge-resourcelist'
+                `java`
+                id("com.intershop.gradle.cartridge-resourcelist")
             }
             
-            version = '1.0.0'
+            version = "1.0.0"
 
             sourceSets {
                 main {
                     java {
-                        srcDir('javasources')
-                        include '**/**/*.java'
+                        srcDir("javasources")
+                        include("**/**/*.java")
                     }
                     resources {
-                        srcDir('javasources')
-                        exclude '**/**/*.java'
+                        srcDir("javasources")
+                        exclude("**/**/*.java")
                     }
                 }
                 test {
                     java {
-                        srcDir('javasources')
-                        include 'tests/**/**'
-                        exclude 'tests/server/**/*.java'
+                        srcDir("javasources")
+                        include("tests/**/**")
+                        exclude("tests/server/**/*.java")
                     }
                 }
             }
@@ -448,10 +445,11 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.cartridge-resourcelist'
+                `java`
+                id("com.intershop.gradle.cartridge-resourcelist")
             }
-            version = '1.0.0'
+            
+            version = "1.0.0"
 
             repositories {
                 mavenCentral()
@@ -544,19 +542,19 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.resourcelist'
+                `java`
+                id("com.intershop.gradle.resourcelist")
             }
 
-            version = '1.0.0'
+            version = "1.0.0"
 
             resourcelist {
                 lists {
-                    orm {
-                        sourceSetName = 'main'
-                        include '**/**/*.orm'
+                    register("orm") {
+                        sourceSetName = "main"
+                        include("**/**/*.orm")
                         resourceListFileName = "resources/\${project.name}/orm/orm.resource"
-                        fileExtension = 'orm'
+                        fileExtension = "orm"
                     }
                 }
             }
@@ -620,26 +618,26 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
 
         buildFile << """
             plugins {
-                id 'java'
-                id 'com.intershop.gradle.resourcelist'
+                `java`
+                id("com.intershop.gradle.resourcelist")
             }
 
-            version = '1.0.0'
+            version = "1.0.0"
 
             resourcelist {
                 lists {
-                    orm {
-                        sourceSetName = 'main'
-                        include '**/**/*.orm'
+                    register("orm") {
+                        sourceSetName = "main"
+                        include("**/**/*.orm")
                         resourceListFileName = "resources/\${project.name}/orm/orm.resource"
-                        fileExtension = 'orm'
+                        fileExtension = "orm"
                     }
-                    pipelets {
-                        sourceSetName = 'main'
-                        include '**/pipelet/**/*.xml'
-                        exclude '**/*_??_??.xml'
+                    register("pipelets") {
+                        sourceSetName = "main"
+                        include("**/pipelet/**/*.xml")
+                        exclude("**/*_??_??.xml")
                         resourceListFileName = "resources/\${project.name}/pipeline/pipelets.resource"
-                        fileExtension = 'xml'
+                        fileExtension = "xml"
                     }
                 }
             }
