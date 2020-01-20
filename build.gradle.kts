@@ -21,6 +21,7 @@ plugins {
     // project plugins
     `java-gradle-plugin`
     groovy
+    id("nebula.kotlin") version "1.3.61"
 
     // test coverage
     jacoco
@@ -35,7 +36,13 @@ plugins {
     id("com.intershop.gradle.scmversion") version "6.0.0"
 
     // plugin for documentation
-    id("org.asciidoctor.jvm.convert") version "2.3.0"
+    id("org.asciidoctor.jvm.convert") version "2.4.0"
+
+    // documentation
+    id("org.jetbrains.dokka") version "0.10.0"
+
+    // code analysis for kotlin
+    id("io.gitlab.arturbosch.detekt") version "1.4.0"
 
     // plugin for publishing to Gradle Portal
     id("com.gradle.plugin-publish") version "0.10.1"
@@ -84,21 +91,19 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-sourceSets.main {
-    java.setSrcDirs(listOf<String>())
-    withConvention(GroovySourceSet::class) {
-        groovy.setSrcDirs(mutableListOf("src/main/groovy", "src/main/java"))
-    }
-}
-
 // set correct project status
 if (project.version.toString().endsWith("-SNAPSHOT")) {
     status = "snapshot'"
 }
 
+detekt {
+    input = files("src/main/kotlin")
+    config = files("detekt.yml")
+}
+
 tasks {
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "5.6.4, 6.0")
+        systemProperty("intershop.gradle.versions", "6.0, 6.1")
 
         if(project.hasProperty("repoURL") && project.hasProperty("repoUser") && project.hasProperty("repoPasswd")) {
             systemProperty("repo_url_config", project.property("repoURL").toString())
@@ -177,10 +182,23 @@ tasks {
         archiveClassifier.set("sources")
     }
 
+    val compileKotlin by getting(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class) {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    val dokka by existing(org.jetbrains.dokka.gradle.DokkaTask::class) {
+        outputFormat = "javadoc"
+        outputDirectory = "$buildDir/javadoc"
+
+        // Java 8 is only version supported both by Oracle/OpenJDK and Dokka itself
+        // https://github.com/Kotlin/dokka/issues/294
+        enabled = JavaVersion.current().isJava8
+    }
+
     register<Jar>("javaDoc") {
-        dependsOn(groovydoc)
-        from(groovydoc)
-        getArchiveClassifier().set("javadoc")
+        dependsOn(dokka)
+        from(dokka)
+        archiveClassifier.set("javadoc")
     }
 }
 
@@ -254,7 +272,8 @@ bintray {
 }
 
 dependencies {
-    compileOnly("org.jetbrains:annotations:17.0.0")
+    compileOnly("org.jetbrains:annotations:18.0.0")
+    implementation(gradleKotlinDsl())
 
     testImplementation("com.intershop.gradle.test:test-gradle-plugin:3.4.0")
     testImplementation(gradleTestKit())

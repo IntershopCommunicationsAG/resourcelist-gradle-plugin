@@ -18,7 +18,6 @@ package com.intershop.gradle.resourcelist
 import com.intershop.gradle.resourcelist.extension.ResourceListExtension
 import com.intershop.gradle.test.AbstractProjectSpec
 import org.gradle.api.Plugin
-import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 
 class CartridgeResourceListPluginSpec extends AbstractProjectSpec {
