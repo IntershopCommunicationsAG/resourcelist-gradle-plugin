@@ -1,16 +1,24 @@
 = ResourceList and Cartridge ResourceList Plugin
-:latestRevision: 3.0.0
+:latestRevision: 4.0.0
 :toc:
 :icons: font
 
-NOTE: Version 3 of this plugin will only work with Gradle 5 and JDK 8.
+NOTE: Version 4 of this plugin will only work with Gradle 6 and JDK 8.
 
 == Summary
 This resourcelist plugin generates, based on existing java source files and resources, a file with the listing of these resources.
 The cartridge-resourcelist plugin generates two specific files. This configuration is provided to the resourcelist plugin.
 
 == Usage Base-ResourceList Plugin
-[source,groovy,subs="attributes"]
+
+++++
+<details open>
+<summary>Groovy</summary>
+++++
+
+[source,groovy]
+[subs=+attributes]
+.build.gradle
 ----
 plugins {
     id 'com.intershop.gradle.resourcelist' version '{latestRevision}'
@@ -34,6 +42,46 @@ resourcelist {
     }
 }
 ----
+
+++++
+</details>
+++++
+
+++++
+<details>
+<summary>Kotlin</summary>
+++++
+
+[source,kotlin]
+[subs=+attributes]
+.build.gradle.kts
+----
+plugins {
+    id("com.intershop.gradle.resourcelist") version "{latestRevision}"
+}
+
+resourcelist {
+    lists {
+        register("orm") {
+            sourceSetName = "main"
+            include("**/**/*.orm")
+            resourceListFileName = "resources/\${project.name}/orm/orm.resource"
+            fileExtension = "orm"
+        }
+        register("pipelets") {
+            sourceSetName = "main"
+            include("**/pipelet/**/*.xml")
+            exclude("**/*_??_??.xml")
+            resourceListFileName = "resources/\${project.name}/pipeline/pipelets.resource"
+            fileExtension = "xml"
+        }
+    }
+}
+----
+
+++++
+</details>
+++++
 The resource list task creates a list of classes, that match to the filter configuration.
 
 == Usage ResourceList Plugin
