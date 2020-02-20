@@ -103,7 +103,7 @@ detekt {
 
 tasks {
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "6.0, 6.1")
+        systemProperty("intershop.gradle.versions", "6.0, 6.1, 6.2")
 
         if(project.hasProperty("repoURL") && project.hasProperty("repoUser") && project.hasProperty("repoPasswd")) {
             systemProperty("repo_url_config", project.property("repoURL").toString())
