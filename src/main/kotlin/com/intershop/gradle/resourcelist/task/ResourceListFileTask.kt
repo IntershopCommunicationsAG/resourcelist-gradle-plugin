@@ -19,7 +19,6 @@ import com.intershop.gradle.resourcelist.utils.getValue
 import com.intershop.gradle.resourcelist.utils.setValue
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.model.ObjectFactory
@@ -36,21 +35,9 @@ import javax.inject.Inject
  * This task creates a resource list artefacts
  * from other files configured with parameters.
  */
-abstract class ResourceListFileTask: DefaultTask() {
+abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFactory,
+                                                        private val fileSystemOps: FileSystemOperations) : DefaultTask() {
 
-    /**
-     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val objectFactory: ObjectFactory
-
-    /**
-     * Inject service of FileSystemOperations (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val fileSystemOperations: FileSystemOperations
-
-    private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
     private val excludesProperty = objectFactory.listProperty(String::class.java)
     private val includesProperty = objectFactory.listProperty(String::class.java)
     private val sourceSetNameProperty = objectFactory.property(String::class.java)
@@ -59,19 +46,12 @@ abstract class ResourceListFileTask: DefaultTask() {
     private val resourceListFileNameProperty = objectFactory.property(String::class.java)
 
     /**
-     * Output directory for Schema gen.
+     * Output directory for file gen.
      *
      * @property outputDir
      */
     @get:OutputDirectory
-    var outputDir: File
-        get() = outputDirProperty.get().asFile
-        set(value) = outputDirProperty.set(value)
-
-    /**
-     * This function set the output directory provider.
-     */
-    fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
+    val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * List of excludes patterns for input directory.
@@ -81,6 +61,14 @@ abstract class ResourceListFileTask: DefaultTask() {
     var excludes: List<String>
         get() = excludesProperty.getOrElse(listOf<String>())
         set(value) = excludesProperty.set(value)
+
+    /**
+     * Add an exclude pattern to the list of excludes.
+     * @param exclude file pattern in ant style
+     */
+    fun exclude(exclude: String) {
+        excludesProperty.add(exclude)
+    }
 
     /**
      * This function set the excludes provider.
@@ -96,6 +84,14 @@ abstract class ResourceListFileTask: DefaultTask() {
     var includes: List<String>
         get() = includesProperty.getOrElse(listOf<String>())
         set(value) = includesProperty.set(value)
+
+    /**
+     * Add an include pattern to the list of includes.
+     * @param include file pattern in ant style
+     */
+    fun include(include: String) {
+        includesProperty.add(include)
+    }
 
     /**
      * This function set the includes provider.
@@ -156,24 +152,23 @@ abstract class ResourceListFileTask: DefaultTask() {
      */
     @get:Input
     val sourcePaths: Set<String> by lazy {
-        var setFilePaths = hashSetOf<String>()
+        val setFilePaths = hashSetOf<String>()
         try {
-            val javaPluginConvention = project.getConvention().getPlugin(JavaPluginConvention::class.java)
-            val sourceSet = javaPluginConvention.getSourceSets().findByName(sourceSetName)
-            if (sourceSet != null) {
-                (sourceSet.resources.srcDirs + sourceSet.allSource.srcDirs).forEach {srcDir ->
-                    val fileSet = project.fileTree(srcDir) {
-                        it.setIncludes(includes)
-                        it.setExcludes(excludes)
-                    }.getFiles()
-                    fileSet.forEach {file ->
-                        if(! file.isDirectory) {
-                            setFilePaths.add(file.path.substring(srcDir.path.length + 1))
+            val javaPluginConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
+            javaPluginConvention.sourceSets.all { srcset ->
+                if(srcset.name == sourceSetName) {
+                    (srcset.resources.srcDirs + srcset.allSource.srcDirs).forEach {srcDir ->
+                        val fileSet = project.fileTree(srcDir) {
+                            it.setIncludes(includes)
+                            it.setExcludes(excludes)
+                        }.files
+                        fileSet.forEach {file ->
+                            if(! file.isDirectory) {
+                                setFilePaths.add(file.path.substring(srcDir.path.length + 1))
+                            }
                         }
                     }
                 }
-            } else {
-                throw GradleException("The specified sourceset $sourceSetName does not exist.")
             }
         } catch(ex: IllegalStateException) {
             throw GradleException("It is necessary to apply a Java plugin! (The JavaPluginConvention is missing.)")
@@ -188,25 +183,23 @@ abstract class ResourceListFileTask: DefaultTask() {
      */
     @TaskAction
     fun create() {
-        val targetFile = File(outputDir, resourceListFileName)
+        val targetFile = File(outputDir.get().asFile, resourceListFileName)
 
         if(targetFile.exists()) {
-            fileSystemOperations.delete {
+            fileSystemOps.delete {
                 it.delete(targetFile)
             }
         }
 
         try {
             //set content
-            if (! sourcePaths.isEmpty()) {
+            if (sourcePaths.isNotEmpty()) {
 
-                targetFile.getParentFile().mkdirs()
+                targetFile.parentFile.mkdirs()
                 targetFile.createNewFile()
-
                 File(targetFile.absolutePath).printWriter().use {out ->
                     sourcePaths.forEach {
                         val entry = it.replace("\\", "/").replaceFirst(".${fileExtension}", "").replace("/", ".")
-
                         if (logger.isDebugEnabled) {
                             logger.debug("'{}' will be added to list.", entry)
                         }
@@ -215,7 +208,7 @@ abstract class ResourceListFileTask: DefaultTask() {
                     }
                 }
             } else {
-                project.logger.info("Collection of files is empty for {}", project.name)
+                project.logger.quiet("Collection of files is empty for {}", project.name)
             }
         } catch (ex: IOException) {
             throw GradleException("File operation for ${this.name} failed (${ex.message}).")

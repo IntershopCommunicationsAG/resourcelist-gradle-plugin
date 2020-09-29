@@ -57,30 +57,33 @@ open class ResourceListPlugin : Plugin<Project> {
      * Configures task and default resource lists.
      */
     private fun configureResourceListConfigurations(project: Project, extension: ResourceListExtension) {
-
         extension.lists.all { listConfiguration: ListConfiguration ->
             with(project) {
-                project.tasks.maybeCreate(listConfiguration.taskName, ResourceListFileTask::class.java).apply {
-                    description = TASKDESCRIPTION + listConfiguration.name
-                    group = RESOURCELIST_TASK_GROUP
+                plugins.withType(JavaBasePlugin::class.java) {
+                    val javaPluginConvention = convention.getPlugin(JavaPluginConvention::class.java)
+                    javaPluginConvention.sourceSets.matching {
+                        it.name == listConfiguration.sourceSetName
+                    }.forEach {sourceSet ->
+                        with(listConfiguration) {
+                            val rtask = tasks.register(taskName, ResourceListFileTask::class.java) { task ->
+                                task.description = TASKDESCRIPTION + name
+                                task.group = RESOURCELIST_TASK_GROUP
 
-                    provideFileExtension(listConfiguration.fileExtensionProvider)
-                    provideResourceListFileName(listConfiguration.resourceListFileNameProvider)
-                    provideSourceSetName(listConfiguration.sourceSetNameProvider)
-                    provideExcludes(listConfiguration.excludesProvider)
-                    provideIncludes(listConfiguration.includesProvider)
-                    provideOutputDir(listConfiguration.outputDirProvider)
+                                task.provideFileExtension(fileExtensionProvider)
+                                task.provideResourceListFileName(resourceListFileNameProvider)
+                                task.provideSourceSetName(sourceSetNameProvider)
+                                task.provideExcludes(excludesProvider)
+                                task.provideIncludes(includesProvider)
+                                task.outputDir.set((outputDirProvider))
 
-                    afterEvaluate {
-                        project.plugins.withType(JavaBasePlugin::class.java) {
-                            val javaPluginConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
-                            javaPluginConvention.sourceSets.matching {
-                                it.name == listConfiguration.sourceSetName
-                            }.forEach {
-                                it.resources.srcDir(this@apply.outputs)
-                                tasks.getByName(it.processResourcesTaskName).dependsOn(this@apply)
+                                sourceSet.resources.srcDir(task.outputs)
+                            }
+
+                            tasks.named(sourceSet.processResourcesTaskName).configure {
+                                it.dependsOn(rtask)
                             }
                         }
+                        return@forEach
                     }
                 }
             }

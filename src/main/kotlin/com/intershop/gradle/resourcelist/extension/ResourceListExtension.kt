@@ -22,7 +22,7 @@ import javax.inject.Inject
 /**
  * Main extension of the resource list plugin.
  */
-abstract class ResourceListExtension {
+abstract class ResourceListExtension @Inject constructor(objectFactory: ObjectFactory) {
 
     companion object {
         /**
@@ -37,15 +37,10 @@ abstract class ResourceListExtension {
     }
 
     /**
-     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val objectFactory: ObjectFactory
-
-    /**
      * Lists of all configuration containers for resource list artifacts.
      *
      * @property lists
      */
-    val lists: NamedDomainObjectContainer<ListConfiguration> = objectFactory.domainObjectContainer(ListConfiguration::class.java)
+    val lists: NamedDomainObjectContainer<ListConfiguration> =
+            objectFactory.domainObjectContainer(ListConfiguration::class.java)
 }

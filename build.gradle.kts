@@ -21,7 +21,7 @@ plugins {
     // project plugins
     `java-gradle-plugin`
     groovy
-    id("nebula.kotlin") version "1.3.61"
+    kotlin("jvm") version "1.3.72"
 
     // test coverage
     jacoco
@@ -36,19 +36,19 @@ plugins {
     id("com.intershop.gradle.scmversion") version "6.1.0"
 
     // plugin for documentation
-    id("org.asciidoctor.jvm.convert") version "2.4.0"
+    id("org.asciidoctor.jvm.convert") version "3.2.0"
 
     // documentation
-    id("org.jetbrains.dokka") version "0.10.0"
+    id("org.jetbrains.dokka") version "0.10.1"
 
     // code analysis for kotlin
-    id("io.gitlab.arturbosch.detekt") version "1.4.0"
+    id("io.gitlab.arturbosch.detekt") version "1.13.1"
 
     // plugin for publishing to Gradle Portal
-    id("com.gradle.plugin-publish") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.12.0"
 
     // plugin for publishing to jcenter
-    id("com.jfrog.bintray") version "1.8.4"
+    id("com.jfrog.bintray") version "1.8.5"
 }
 
 scm {
@@ -59,32 +59,6 @@ scm {
 group = "com.intershop.gradle.resourcelist"
 description = "Gradle resourcelist plugins"
 version = scm.version.version
-
-val resourcelistPluginId = "com.intershop.gradle.resourcelist"
-val cartridgeResourcelistPluginId = "com.intershop.gradle.cartridge-resourcelist"
-
-gradlePlugin {
-    plugins {
-        create("resourcelistPlugin") {
-            id = resourcelistPluginId
-            implementationClass = "com.intershop.gradle.resourcelist.ResourceListPlugin"
-            displayName = project.name
-            description = project.description
-        }
-        create("cartridgeResourcelistPlugin") {
-            id = cartridgeResourcelistPluginId
-            implementationClass = "com.intershop.gradle.resourcelist.CartridgeResourceListPlugin"
-            displayName = project.name
-            description = project.description
-        }
-    }
-}
-
-pluginBundle {
-    website = "https://github.com/IntershopCommunicationsAG/${project.name}"
-    vcsUrl = "https://github.com/IntershopCommunicationsAG/${project.name}"
-    tags = listOf("intershop", "gradle", "plugin", "build", "resourcelist", "cartridge")
-}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -103,7 +77,7 @@ detekt {
 
 tasks {
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "6.0, 6.1, 6.2")
+        systemProperty("intershop.gradle.versions", "6.6.1")
 
         if(project.hasProperty("repoURL") && project.hasProperty("repoUser") && project.hasProperty("repoPasswd")) {
             systemProperty("repo_url_config", project.property("repoURL").toString())
@@ -200,6 +174,29 @@ tasks {
         from(dokka)
         archiveClassifier.set("javadoc")
     }
+}
+
+gradlePlugin {
+    plugins {
+        create("resourcelistPlugin") {
+            id = "com.intershop.gradle.resourcelist"
+            implementationClass = "com.intershop.gradle.resourcelist.ResourceListPlugin"
+            displayName = project.name
+            description = project.description
+        }
+        create("cartridgeResourcelistPlugin") {
+            id =  "com.intershop.gradle.cartridge-resourcelist"
+            implementationClass = "com.intershop.gradle.resourcelist.CartridgeResourceListPlugin"
+            displayName = project.name
+            description = project.description
+        }
+    }
+}
+
+pluginBundle {
+    website = "https://github.com/IntershopCommunicationsAG/${project.name}"
+    vcsUrl = "https://github.com/IntershopCommunicationsAG/${project.name}"
+    tags = listOf("intershop", "gradle", "plugin", "build", "resourcelist", "cartridge")
 }
 
 publishing {

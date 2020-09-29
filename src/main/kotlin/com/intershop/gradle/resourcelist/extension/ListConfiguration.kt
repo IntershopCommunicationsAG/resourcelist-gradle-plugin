@@ -18,8 +18,10 @@ package com.intershop.gradle.resourcelist.extension
 import com.intershop.gradle.resourcelist.utils.getValue
 import com.intershop.gradle.resourcelist.utils.setValue
 import org.gradle.api.file.Directory
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.SourceSet
 import java.io.File
@@ -31,23 +33,13 @@ import javax.inject.Inject
  * @constructor creates a single configuration container
  * @param name name / id of the configuration
  */
-abstract class ListConfiguration(val name: String) {
+abstract class ListConfiguration @Inject constructor(objectFactory: ObjectFactory,
+                                                     layout: ProjectLayout,
+                                                     val name: String) {
 
-    /**
-     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val objectFactory: ObjectFactory
-
-    /**
-     * Inject service of ProjectLayout (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val layout: ProjectLayout
-
-    private val outputDirProperty = objectFactory.directoryProperty()
-    private val excludesProperty = objectFactory.listProperty(String::class.java)
-    private val includesProperty = objectFactory.listProperty(String::class.java)
+    private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
+    private val excludesProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
+    private val includesProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
     private val sourceSetNameProperty = objectFactory.property(String::class.java)
     private val fileExtensionProperty = objectFactory.property(String::class.java)
     private val resourceListFileNameProperty = objectFactory.property(String::class.java)
@@ -63,7 +55,7 @@ abstract class ListConfiguration(val name: String) {
      *
      * @property excludes
      */
-    var excludes by excludesProperty
+    var excludes: List<String> by excludesProperty
 
     /**
      * Add an exclude configuration to the list
@@ -86,7 +78,7 @@ abstract class ListConfiguration(val name: String) {
      *
      * @property excludes
      */
-    var includes by includesProperty
+    var includes: List<String> by includesProperty
 
     /**
      * Add an include configuration to the list
@@ -99,14 +91,13 @@ abstract class ListConfiguration(val name: String) {
     }
 
     /**
-     * Provider for sourceSetName property.
+     * Provider for selected source set property.
      */
     val sourceSetNameProvider: Provider<String>
         get() = sourceSetNameProperty
 
     /**
-     * The generated resources will be add to the
-     * resources of the specified sourceSet.
+     * Generated files will be added to the source set.
      *
      * @property sourceSetName
      */
@@ -156,7 +147,7 @@ abstract class ListConfiguration(val name: String) {
         set(value) = outputDirProperty.set(value)
 
     init {
-        outputDirProperty.convention(layout.getBuildDirectory().
+        outputDirProperty.convention(layout.buildDirectory.
                 dir("${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/${name.replace(' ', '_')}").get())
         sourceSetNameProperty.convention(SourceSet.MAIN_SOURCE_SET_NAME)
     }
