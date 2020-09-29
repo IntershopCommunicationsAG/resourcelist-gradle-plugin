@@ -19,7 +19,6 @@ import com.intershop.gradle.resourcelist.utils.getValue
 import com.intershop.gradle.resourcelist.utils.setValue
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.model.ObjectFactory
@@ -37,9 +36,8 @@ import javax.inject.Inject
  * from other files configured with parameters.
  */
 abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFactory,
-                                                        val fileSystemOps: FileSystemOperations) : DefaultTask() {
+                                                        private val fileSystemOps: FileSystemOperations) : DefaultTask() {
 
-    val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
     private val excludesProperty = objectFactory.listProperty(String::class.java)
     private val includesProperty = objectFactory.listProperty(String::class.java)
     private val sourceSetNameProperty = objectFactory.property(String::class.java)
@@ -48,19 +46,12 @@ abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFac
     private val resourceListFileNameProperty = objectFactory.property(String::class.java)
 
     /**
-     * Output directory for Schema gen.
+     * Output directory for file gen.
      *
      * @property outputDir
      */
     @get:OutputDirectory
-    var outputDir: File
-        get() = outputDirProperty.get().asFile
-        set(value) = outputDirProperty.set(value)
-
-    /**
-     * This function set the output directory provider.
-     */
-    fun provideOutputDir(outputDir: Provider<Directory>) = outputDirProperty.set(outputDir)
+    val outputDir: DirectoryProperty = objectFactory.directoryProperty()
 
     /**
      * List of excludes patterns for input directory.
@@ -71,6 +62,10 @@ abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFac
         get() = excludesProperty.getOrElse(listOf<String>())
         set(value) = excludesProperty.set(value)
 
+    /**
+     * Add an exclude pattern to the list of excludes.
+     * @param exclude file pattern in ant style
+     */
     fun exclude(exclude: String) {
         excludesProperty.add(exclude)
     }
@@ -90,8 +85,12 @@ abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFac
         get() = includesProperty.getOrElse(listOf<String>())
         set(value) = includesProperty.set(value)
 
-    fun include(exclude: String) {
-        includesProperty.add(exclude)
+    /**
+     * Add an include pattern to the list of includes.
+     * @param include file pattern in ant style
+     */
+    fun include(include: String) {
+        includesProperty.add(include)
     }
 
     /**
@@ -153,16 +152,16 @@ abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFac
      */
     @get:Input
     val sourcePaths: Set<String> by lazy {
-        var setFilePaths = hashSetOf<String>()
+        val setFilePaths = hashSetOf<String>()
         try {
-            val javaPluginConvention = project.getConvention().getPlugin(JavaPluginConvention::class.java)
+            val javaPluginConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
             javaPluginConvention.sourceSets.all { srcset ->
                 if(srcset.name == sourceSetName) {
                     (srcset.resources.srcDirs + srcset.allSource.srcDirs).forEach {srcDir ->
                         val fileSet = project.fileTree(srcDir) {
                             it.setIncludes(includes)
                             it.setExcludes(excludes)
-                        }.getFiles()
+                        }.files
                         fileSet.forEach {file ->
                             if(! file.isDirectory) {
                                 setFilePaths.add(file.path.substring(srcDir.path.length + 1))
@@ -184,7 +183,7 @@ abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFac
      */
     @TaskAction
     fun create() {
-        val targetFile = File(outputDir, resourceListFileName)
+        val targetFile = File(outputDir.get().asFile, resourceListFileName)
 
         if(targetFile.exists()) {
             fileSystemOps.delete {
@@ -194,9 +193,9 @@ abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFac
 
         try {
             //set content
-            if (! sourcePaths.isEmpty()) {
+            if (sourcePaths.isNotEmpty()) {
 
-                targetFile.getParentFile().mkdirs()
+                targetFile.parentFile.mkdirs()
                 targetFile.createNewFile()
                 File(targetFile.absolutePath).printWriter().use {out ->
                     sourcePaths.forEach {

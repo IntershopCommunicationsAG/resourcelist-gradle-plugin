@@ -57,7 +57,6 @@ open class ResourceListPlugin : Plugin<Project> {
      * Configures task and default resource lists.
      */
     private fun configureResourceListConfigurations(project: Project, extension: ResourceListExtension) {
-        project.logger.quiet("Create for pipeletes ...{}", extension.lists.size)
         extension.lists.all { listConfiguration: ListConfiguration ->
             with(project) {
                 plugins.withType(JavaBasePlugin::class.java) {
@@ -65,24 +64,25 @@ open class ResourceListPlugin : Plugin<Project> {
                     javaPluginConvention.sourceSets.matching {
                         it.name == listConfiguration.sourceSetName
                     }.forEach {sourceSet ->
-                        val rtask = tasks.register(listConfiguration.taskName, ResourceListFileTask::class.java) { task ->
-                            task.description = TASKDESCRIPTION + listConfiguration.name
-                            task.group = RESOURCELIST_TASK_GROUP
+                        with(listConfiguration) {
+                            val rtask = tasks.register(taskName, ResourceListFileTask::class.java) { task ->
+                                task.description = TASKDESCRIPTION + name
+                                task.group = RESOURCELIST_TASK_GROUP
 
-                            task.provideFileExtension(listConfiguration.fileExtensionProvider)
-                            task.provideResourceListFileName(listConfiguration.resourceListFileNameProvider)
-                            task.provideSourceSetName(listConfiguration.sourceSetNameProvider)
-                            task.provideExcludes(listConfiguration.excludesProvider)
-                            task.provideIncludes(listConfiguration.includesProvider)
-                            task.provideOutputDir(listConfiguration.outputDirProvider)
+                                task.provideFileExtension(fileExtensionProvider)
+                                task.provideResourceListFileName(resourceListFileNameProvider)
+                                task.provideSourceSetName(sourceSetNameProvider)
+                                task.provideExcludes(excludesProvider)
+                                task.provideIncludes(includesProvider)
+                                task.outputDir.set((outputDirProvider))
 
-                            sourceSet.resources.srcDir(task.outputs)
+                                sourceSet.resources.srcDir(task.outputs)
+                            }
+
+                            tasks.named(sourceSet.processResourcesTaskName).configure {
+                                it.dependsOn(rtask)
+                            }
                         }
-
-                        tasks.named(sourceSet.processResourcesTaskName).configure {
-                            it.dependsOn(rtask)
-                        }
-
                         return@forEach
                     }
                 }

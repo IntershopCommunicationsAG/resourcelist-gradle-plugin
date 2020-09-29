@@ -15,13 +15,11 @@
  */
 package com.intershop.gradle.resourcelist
 
-import com.intershop.gradle.resourcelist.extension.ListConfiguration
-import com.intershop.gradle.resourcelist.extension.ResourceListExtension
+import com.intershop.gradle.resourcelist.extension.ResourceListExtension.Companion.RESOURCELIST_OUTPUTPATH
 import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 
@@ -70,34 +68,42 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
                 val javaPluginConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
                 javaPluginConvention.sourceSets.all {
                     if(it.name == SourceSet.MAIN_SOURCE_SET_NAME) {
-                        val ptask = tasks.register("resourceList${RESOURCELIST_PIPELETS_CONFIG.capitalize()}", ResourceListFileTask::class.java) { task ->
+                        val ptask = tasks.register("resourceList${RESOURCELIST_PIPELETS_CONFIG.capitalize()}",
+                                ResourceListFileTask::class.java) { task ->
                             task.description = ResourceListPlugin.TASKDESCRIPTION + RESOURCELIST_PIPELETS_CONFIG
                             task.group = ResourceListPlugin.RESOURCELIST_TASK_GROUP
 
                             task.fileExtension = RESOURCELIST_PIPELETS_EXTENSION
-                            task.resourceListFileName = String.format("resources/%s/pipeline/pipelets.resource", project.name)
+                            task.resourceListFileName =
+                                    String.format("resources/%s/pipeline/pipelets.resource", project.name)
                             task.sourceSetName = SourceSet.MAIN_SOURCE_SET_NAME
                             task.include(RESOURCELIST_PIPELETS_INCLUDE)
                             task.exclude(RESOURCELIST_PIPELETS_EXCLUDE)
-                            task.outputDirProperty.set(layout.getBuildDirectory().dir("${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_PIPELETS_CONFIG}").get())
+                            task.outputDir.set(
+                                    layout.buildDirectory.dir(
+                                            "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_PIPELETS_CONFIG}").get())
 
                             it.resources.srcDir(task.outputs)
                         }
-                        val otask = tasks.register("resourceList${RESOURCELIST_ORM_CONFIG.capitalize()}", ResourceListFileTask::class.java) { task ->
+                        val otask = tasks.register("resourceList${RESOURCELIST_ORM_CONFIG.capitalize()}",
+                                ResourceListFileTask::class.java) { task ->
                             task.description = ResourceListPlugin.TASKDESCRIPTION + RESOURCELIST_ORM_CONFIG
                             task.group = ResourceListPlugin.RESOURCELIST_TASK_GROUP
 
                             task.fileExtension = RESOURCELIST_ORM_EXTENSION
-                            task.resourceListFileName = String.format("resources/%s/orm/orm.resource", project.name)
+                            task.resourceListFileName =
+                                    String.format("resources/%s/orm/orm.resource", project.name)
                             task.sourceSetName = SourceSet.MAIN_SOURCE_SET_NAME
                             task.include(RESOURCELIST_ORM_INCLUDE)
-                            task.outputDirProperty.set(layout.getBuildDirectory().dir("${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_ORM_CONFIG}").get())
+                            task.outputDir.set(
+                                    layout.buildDirectory.dir(
+                                            "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_ORM_CONFIG}").get())
 
                             it.resources.srcDir(task.outputs)
                         }
 
-                        tasks.named(it.processResourcesTaskName).configure {
-                            it.dependsOn(ptask, otask)
+                        tasks.named(it.processResourcesTaskName).configure { task ->
+                            task.dependsOn(ptask, otask)
                         }
                     }
                 }

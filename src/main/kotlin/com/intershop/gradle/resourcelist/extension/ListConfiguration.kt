@@ -33,19 +33,9 @@ import javax.inject.Inject
  * @constructor creates a single configuration container
  * @param name name / id of the configuration
  */
-abstract class ListConfiguration(val name: String) {
-
-    /**
-     * Inject service of ObjectFactory (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val objectFactory: ObjectFactory
-
-    /**
-     * Inject service of ProjectLayout (See "Service injection" in Gradle documentation.
-     */
-    @get:Inject
-    abstract val layout: ProjectLayout
+abstract class ListConfiguration @Inject constructor(objectFactory: ObjectFactory,
+                                                     layout: ProjectLayout,
+                                                     val name: String) {
 
     private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
     private val excludesProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
@@ -65,7 +55,7 @@ abstract class ListConfiguration(val name: String) {
      *
      * @property excludes
      */
-    var excludes by excludesProperty
+    var excludes: List<String> by excludesProperty
 
     /**
      * Add an exclude configuration to the list
@@ -88,7 +78,7 @@ abstract class ListConfiguration(val name: String) {
      *
      * @property excludes
      */
-    var includes by includesProperty
+    var includes: List<String> by includesProperty
 
     /**
      * Add an include configuration to the list
@@ -157,7 +147,7 @@ abstract class ListConfiguration(val name: String) {
         set(value) = outputDirProperty.set(value)
 
     init {
-        outputDirProperty.convention(layout.getBuildDirectory().
+        outputDirProperty.convention(layout.buildDirectory.
                 dir("${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/${name.replace(' ', '_')}").get())
         sourceSetNameProperty.convention(SourceSet.MAIN_SOURCE_SET_NAME)
     }
