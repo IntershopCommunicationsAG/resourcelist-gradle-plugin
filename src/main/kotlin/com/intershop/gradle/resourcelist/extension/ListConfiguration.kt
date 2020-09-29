@@ -18,8 +18,10 @@ package com.intershop.gradle.resourcelist.extension
 import com.intershop.gradle.resourcelist.utils.getValue
 import com.intershop.gradle.resourcelist.utils.setValue
 import org.gradle.api.file.Directory
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.SourceSet
 import java.io.File
@@ -45,9 +47,9 @@ abstract class ListConfiguration(val name: String) {
     @get:Inject
     abstract val layout: ProjectLayout
 
-    private val outputDirProperty = objectFactory.directoryProperty()
-    private val excludesProperty = objectFactory.listProperty(String::class.java)
-    private val includesProperty = objectFactory.listProperty(String::class.java)
+    private val outputDirProperty: DirectoryProperty = objectFactory.directoryProperty()
+    private val excludesProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
+    private val includesProperty: ListProperty<String> = objectFactory.listProperty(String::class.java)
     private val sourceSetNameProperty = objectFactory.property(String::class.java)
     private val fileExtensionProperty = objectFactory.property(String::class.java)
     private val resourceListFileNameProperty = objectFactory.property(String::class.java)
@@ -99,14 +101,13 @@ abstract class ListConfiguration(val name: String) {
     }
 
     /**
-     * Provider for sourceSetName property.
+     * Provider for selected source set property.
      */
     val sourceSetNameProvider: Provider<String>
         get() = sourceSetNameProperty
 
     /**
-     * The generated resources will be add to the
-     * resources of the specified sourceSet.
+     * Generated files will be added to the source set.
      *
      * @property sourceSetName
      */

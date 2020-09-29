@@ -33,9 +33,6 @@ class CartridgeResourceListPluginSpec extends AbstractProjectSpec {
         plugin.apply(project)
 
         then:
-        project.extensions.getByName(ResourceListExtension.RESOURCELIST_EXTENSION_NAME).lists.orm
-        project.extensions.getByName(ResourceListExtension.RESOURCELIST_EXTENSION_NAME).lists.pipelets
-
         project.tasks.findByName('resourceListOrm')
         project.tasks.findByName('resourceListPipelets')
     }
