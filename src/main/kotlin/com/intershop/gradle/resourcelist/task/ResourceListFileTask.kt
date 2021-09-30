@@ -35,8 +35,9 @@ import javax.inject.Inject
  * This task creates a resource list artefacts
  * from other files configured with parameters.
  */
-abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFactory,
-                                                        private val fileSystemOps: FileSystemOperations) : DefaultTask() {
+abstract class ResourceListFileTask
+    @Inject constructor(objectFactory: ObjectFactory,
+                        private val fileSystemOps: FileSystemOperations) : DefaultTask() {
 
     private val excludesProperty = objectFactory.listProperty(String::class.java)
     private val includesProperty = objectFactory.listProperty(String::class.java)

@@ -82,7 +82,8 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
         }
     }
 
-    private fun configurePipeletResourceTask(project: Project, sourceSet: SourceSet): TaskProvider<ResourceListFileTask> {
+    private fun configurePipeletResourceTask(project: Project,
+                                             sourceSet: SourceSet): TaskProvider<ResourceListFileTask> {
         return project.tasks.register(
             "resourceList${
                 RESOURCELIST_PIPELETS_CONFIG.replaceFirstChar {

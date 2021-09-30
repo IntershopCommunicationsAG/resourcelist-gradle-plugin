@@ -21,7 +21,7 @@ import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 
 /**
  *  Basis plugin implementation of the resource list plugin.
@@ -60,7 +60,7 @@ open class ResourceListPlugin : Plugin<Project> {
         extension.lists.all { listConfiguration: ListConfiguration ->
             with(project) {
                 plugins.withType(JavaBasePlugin::class.java) {
-                    val javaPluginConvention = convention.getPlugin(JavaPluginConvention::class.java)
+                    val javaPluginConvention = extensions.getByType(JavaPluginExtension::class.java)
                     javaPluginConvention.sourceSets.matching {
                         it.name == listConfiguration.sourceSetName
                     }.forEach {sourceSet ->
