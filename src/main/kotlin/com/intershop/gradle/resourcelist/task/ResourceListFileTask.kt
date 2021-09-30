@@ -22,7 +22,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
@@ -35,8 +35,9 @@ import javax.inject.Inject
  * This task creates a resource list artefacts
  * from other files configured with parameters.
  */
-abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFactory,
-                                                        private val fileSystemOps: FileSystemOperations) : DefaultTask() {
+abstract class ResourceListFileTask
+    @Inject constructor(objectFactory: ObjectFactory,
+                        private val fileSystemOps: FileSystemOperations) : DefaultTask() {
 
     private val excludesProperty = objectFactory.listProperty(String::class.java)
     private val includesProperty = objectFactory.listProperty(String::class.java)
@@ -154,8 +155,8 @@ abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFac
     val sourcePaths: Set<String> by lazy {
         val setFilePaths = hashSetOf<String>()
         try {
-            val javaPluginConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
-            javaPluginConvention.sourceSets.all { srcset ->
+            val java = project.extensions.getByType(JavaPluginExtension::class.java)
+            java.sourceSets.all { srcset ->
                 if(srcset.name == sourceSetName) {
                     (srcset.resources.srcDirs + srcset.allSource.srcDirs).forEach {srcDir ->
                         val fileSet = project.fileTree(srcDir) {
@@ -194,7 +195,6 @@ abstract class ResourceListFileTask @Inject constructor(objectFactory: ObjectFac
         try {
             //set content
             if (sourcePaths.isNotEmpty()) {
-
                 targetFile.parentFile.mkdirs()
                 targetFile.createNewFile()
                 File(targetFile.absolutePath).printWriter().use {out ->

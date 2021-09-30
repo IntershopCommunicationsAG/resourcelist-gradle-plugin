@@ -22,7 +22,7 @@ import javax.inject.Inject
 /**
  * Main extension of the resource list plugin.
  */
-abstract class ResourceListExtension @Inject constructor(objectFactory: ObjectFactory) {
+open class ResourceListExtension @Inject constructor(objectFactory: ObjectFactory) {
 
     companion object {
         /**

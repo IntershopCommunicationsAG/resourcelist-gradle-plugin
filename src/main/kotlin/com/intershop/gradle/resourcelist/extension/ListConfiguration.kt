@@ -25,6 +25,7 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.SourceSet
 import java.io.File
+import java.util.*
 import javax.inject.Inject
 
 /**
@@ -33,7 +34,7 @@ import javax.inject.Inject
  * @constructor creates a single configuration container
  * @param name name / id of the configuration
  */
-abstract class ListConfiguration @Inject constructor(objectFactory: ObjectFactory,
+open class ListConfiguration @Inject constructor(objectFactory: ObjectFactory,
                                                      layout: ProjectLayout,
                                                      val name: String) {
 
@@ -157,5 +158,6 @@ abstract class ListConfiguration @Inject constructor(objectFactory: ObjectFactor
      *
      * @property taskName name with prefix
      */
-    val taskName = "resourceList" + name.capitalize()
+    val taskName = "resourceList" +
+            name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 }
