@@ -39,11 +39,6 @@ abstract class ResourceListFileTask
     @Inject constructor(objectFactory: ObjectFactory,
                         private val fileSystemOps: FileSystemOperations) : DefaultTask() {
 
-    /**
-     * The one and only folder searched for resources
-     */
-    private val RESOURCES = "resources"
-
     private val excludesProperty = objectFactory.listProperty(String::class.java)
     private val includesProperty = objectFactory.listProperty(String::class.java)
     private val sourceSetNameProperty = objectFactory.property(String::class.java)
@@ -165,7 +160,7 @@ abstract class ResourceListFileTask
                 if(srcset.name == sourceSetName) {
                     // search in "resources" only
                     (srcset.resources.srcDirs).forEach {srcDir ->
-                        if (RESOURCES == srcDir.name) {
+                        if ("resources" == srcDir.name) {
                             val fileSet = project.fileTree(srcDir) {
                                 it.setIncludes(includes)
                                 it.setExcludes(excludes)
