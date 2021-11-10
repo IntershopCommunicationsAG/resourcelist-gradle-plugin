@@ -146,10 +146,10 @@ abstract class ResourceListFileTask
             sourceSetNameProperty.set(sourceSetName)
 
     /**
-     * This is the set of source paths of resources
+     * This is the set of resource source paths of resources
      * for the resource list (read only).
      *
-     * @property sourcePaths
+     * @property resourcePaths
      */
     @get:Input
     val sourcePaths: Set<String> by lazy {
@@ -158,14 +158,17 @@ abstract class ResourceListFileTask
             val java = project.extensions.getByType(JavaPluginExtension::class.java)
             java.sourceSets.all { srcset ->
                 if(srcset.name == sourceSetName) {
-                    (srcset.resources.srcDirs + srcset.allSource.srcDirs).forEach {srcDir ->
-                        val fileSet = project.fileTree(srcDir) {
-                            it.setIncludes(includes)
-                            it.setExcludes(excludes)
-                        }.files
-                        fileSet.forEach {file ->
-                            if(! file.isDirectory) {
-                                setFilePaths.add(file.path.substring(srcDir.path.length + 1))
+                    // search in "resources" only
+                    (srcset.resources.srcDirs).forEach {srcDir ->
+                        if ("resources" == srcDir.name) {
+                            val fileSet = project.fileTree(srcDir) {
+                                it.setIncludes(includes)
+                                it.setExcludes(excludes)
+                            }.files
+                            fileSet.forEach { file ->
+                                if (!file.isDirectory) {
+                                    setFilePaths.add(file.path.substring(srcDir.path.length + 1))
+                                }
                             }
                         }
                     }
