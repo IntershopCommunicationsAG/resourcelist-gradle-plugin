@@ -103,7 +103,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
                 project.layout.buildDirectory.dir(
                     "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_PIPELETS_CONFIG}").get())
 
-            sourceSet.resources.srcDir(task.outputs)
+            sourceSet.output.dir(task.outputs)
         }
     }
 
@@ -125,7 +125,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
                 project.layout.buildDirectory.dir(
                     "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_ORM_CONFIG}").get())
 
-            sourceSet.resources.srcDir(task.outputs)
+            sourceSet.output.dir(task.outputs)
         }
     }
 }

@@ -156,19 +156,14 @@ abstract class ResourceListFileTask
         val setFilePaths = hashSetOf<String>()
         try {
             val java = project.extensions.getByType(JavaPluginExtension::class.java)
-            java.sourceSets.all { srcset ->
-                if(srcset.name == sourceSetName) {
-                    (srcset.resources.srcDirs + srcset.allSource.srcDirs).forEach {srcDir ->
-                        val fileSet = project.fileTree(srcDir) {
-                            it.setIncludes(includes)
-                            it.setExcludes(excludes)
-                        }.files
-                        fileSet.forEach {file ->
-                            if(! file.isDirectory) {
-                                setFilePaths.add(file.path.substring(srcDir.path.length + 1))
-                            }
-                        }
-                    }
+            val srcset = java.sourceSets.findByName(sourceSetName)
+
+            srcset?.resources?.srcDirs?.forEach {srcDir ->
+                project.fileTree(srcDir) {
+                    it.setIncludes(includes)
+                    it.setExcludes(excludes)
+                }.files.filter { ! it.isDirectory }.forEach {file ->
+                        setFilePaths.add(file.path.substring(srcDir.path.length + 1))
                 }
             }
         } catch(ex: IllegalStateException) {
