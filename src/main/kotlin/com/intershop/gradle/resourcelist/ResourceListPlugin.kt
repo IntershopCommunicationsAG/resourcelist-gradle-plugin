@@ -76,7 +76,7 @@ open class ResourceListPlugin : Plugin<Project> {
                                 task.provideIncludes(includesProvider)
                                 task.outputDir.set((outputDirProvider))
 
-                                sourceSet.resources.srcDir(task.outputs)
+                                sourceSet.output.dir(task.outputs)
                             }
 
                             tasks.named(sourceSet.processResourcesTaskName).configure {
