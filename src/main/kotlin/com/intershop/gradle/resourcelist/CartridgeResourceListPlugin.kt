@@ -23,6 +23,7 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.language.jvm.tasks.ProcessResources
 import java.util.*
 
 /**
@@ -70,11 +71,13 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
                 val javaPluginConvention = extensions.getByType(JavaPluginExtension::class.java)
                 javaPluginConvention.sourceSets.all {
                     if(it.name == SourceSet.MAIN_SOURCE_SET_NAME) {
-                        val ptask = configurePipeletResourceTask(project, it)
-                        val otask = configureOrmResourceTask(project, it)
+                        val ptask = configurePipeletResourceTask(project)
+                        val otask = configureOrmResourceTask(project)
 
-                        tasks.named(it.processResourcesTaskName).configure { task ->
-                            task.dependsOn(ptask, otask)
+                        project.tasks.named(it.processResourcesTaskName, ProcessResources::class.java).configure { t ->
+                            t.from( ptask )
+                            t.from( otask )
+                            t.dependsOn(ptask, otask)
                         }
                     }
                 }
@@ -82,8 +85,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
         }
     }
 
-    private fun configurePipeletResourceTask(project: Project,
-                                             sourceSet: SourceSet): TaskProvider<ResourceListFileTask> {
+    private fun configurePipeletResourceTask(project: Project): TaskProvider<ResourceListFileTask> {
         return project.tasks.register(
             "resourceList${
                 RESOURCELIST_PIPELETS_CONFIG.replaceFirstChar {
@@ -95,19 +97,17 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
 
             task.fileExtension = RESOURCELIST_PIPELETS_EXTENSION
             task.resourceListFileName =
-                String.format("resources/%s/pipeline/pipelets.resource", project.name)
+                String.format("%s/pipeline/pipelets.resource", project.name)
             task.sourceSetName = SourceSet.MAIN_SOURCE_SET_NAME
             task.include(RESOURCELIST_PIPELETS_INCLUDE)
             task.exclude(RESOURCELIST_PIPELETS_EXCLUDE)
             task.outputDir.set(
                 project.layout.buildDirectory.dir(
                     "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_PIPELETS_CONFIG}").get())
-
-            sourceSet.output.dir(task.outputs)
         }
     }
 
-    private fun configureOrmResourceTask(project: Project, sourceSet: SourceSet): TaskProvider<ResourceListFileTask> {
+    private fun configureOrmResourceTask(project: Project): TaskProvider<ResourceListFileTask> {
         return project.tasks.register("resourceList${
             RESOURCELIST_ORM_CONFIG.replaceFirstChar {
                 if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -118,14 +118,12 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
 
             task.fileExtension = RESOURCELIST_ORM_EXTENSION
             task.resourceListFileName =
-                String.format("resources/%s/orm/orm.resource", project.name)
+                String.format("%s/orm/orm.resource", project.name)
             task.sourceSetName = SourceSet.MAIN_SOURCE_SET_NAME
             task.include(RESOURCELIST_ORM_INCLUDE)
             task.outputDir.set(
                 project.layout.buildDirectory.dir(
                     "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_ORM_CONFIG}").get())
-
-            sourceSet.output.dir(task.outputs)
         }
     }
 }

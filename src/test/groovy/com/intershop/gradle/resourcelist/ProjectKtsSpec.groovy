@@ -62,7 +62,7 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
+        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
 
         boolean contentExists = true
         if(resourceFile.exists()) {
@@ -141,7 +141,7 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
+        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -212,8 +212,8 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
-        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -299,8 +299,8 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/orm/resources/testCartridge1/orm/orm.resource')
-        File resourcePipeletsFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/pipelets/resources/testCartridge1/pipeline/pipelets.resource')
+        File resourceOrmFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/orm/testCartridge1/orm/orm.resource')
+        File resourcePipeletsFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/pipelets/testCartridge1/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -398,8 +398,8 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
-        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -465,8 +465,8 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
-        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -509,8 +509,8 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceChangedOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
-        File resourceChangedPipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
+        File resourceChangedOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
+        File resourceChangedPipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
 
         if(resourcePipeletsFile.exists()) {
             String contentPipeletsTxt = resourcePipeletsFile.text
@@ -553,7 +553,7 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                     register("orm") {
                         sourceSetName = "main"
                         include("**/**/*.orm")
-                        resourceListFileName = "resources/\${project.name}/orm/orm.resource"
+                        resourceListFileName = "\${project.name}/orm/orm.resource"
                         fileExtension = "orm"
                     }
                 }
@@ -585,7 +585,7 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
+        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
 
         boolean contentExists = true
         if(resourceFile.exists()) {
@@ -629,14 +629,14 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                     register("orm") {
                         sourceSetName = "main"
                         include("**/**/*.orm")
-                        resourceListFileName = "resources/\${project.name}/orm/orm.resource"
+                        resourceListFileName = "\${project.name}/orm/orm.resource"
                         fileExtension = "orm"
                     }
                     register("pipelets") {
                         sourceSetName = "main"
                         include("**/pipelet/**/*.xml")
                         exclude("**/*_??_??.xml")
-                        resourceListFileName = "resources/\${project.name}/pipeline/pipelets.resource"
+                        resourceListFileName = "\${project.name}/pipeline/pipelets.resource"
                         fileExtension = "xml"
                     }
                 }
@@ -669,8 +669,8 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
-        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
