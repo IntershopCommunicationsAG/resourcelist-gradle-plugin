@@ -62,7 +62,7 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         //check resource file
-        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
+        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
 
         boolean contentExists = true
         if(resourceFile.exists()) {
@@ -141,7 +141,7 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         //check resource file
-        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
+        File resourceFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -212,8 +212,8 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
-        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -299,10 +299,10 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/orm/testCartridge1/orm/orm.resource')
-        File resourcePipeletsFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/pipelets/testCartridge1/pipeline/pipelets.resource')
-        File resourceOrmFile2 = new File(testProjectDir, 'testCartridge2/build/generated/resourcelist/orm/testCartridge2/orm/orm.resource')
-        File resourcePipeletsFile2 = new File(testProjectDir, 'testCartridge2/build/generated/resourcelist/pipelets/testCartridge2/pipeline/pipelets.resource')
+        File resourceOrmFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/orm/resources/testCartridge1/orm/orm.resource')
+        File resourcePipeletsFile1 = new File(testProjectDir, 'testCartridge1/build/generated/resourcelist/pipelets/resources/testCartridge1/pipeline/pipelets.resource')
+        File resourceOrmFile2 = new File(testProjectDir, 'testCartridge2/build/generated/resourcelist/orm/resources/testCartridge2/orm/orm.resource')
+        File resourcePipeletsFile2 = new File(testProjectDir, 'testCartridge2/build/generated/resourcelist/pipelets/resources/testCartridge2/pipeline/pipelets.resource')
 
 
         boolean contentExists = true
@@ -403,8 +403,8 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
-        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -469,8 +469,8 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         //check resource file
-        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
-        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
 
         boolean contentExists = true
         boolean addContentExists = false
@@ -513,8 +513,8 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
                 .build()
 
         //check resource file
-        File resourceChangedOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resourcelisttest/orm/orm.resource')
-        File resourceChangedPipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resourcelisttest/pipeline/pipelets.resource')
+        File resourceChangedOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
+        File resourceChangedPipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
 
         if(resourcePipeletsFile.exists()) {
             String contentPipeletsTxt = resourcePipeletsFile.text

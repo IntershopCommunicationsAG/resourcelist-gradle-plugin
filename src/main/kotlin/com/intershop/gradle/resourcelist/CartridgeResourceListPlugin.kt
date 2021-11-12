@@ -97,7 +97,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
 
             task.fileExtension = RESOURCELIST_PIPELETS_EXTENSION
             task.resourceListFileName =
-                String.format("%s/pipeline/pipelets.resource", project.name)
+                String.format("resources/%s/pipeline/pipelets.resource", project.name)
             task.sourceSetName = SourceSet.MAIN_SOURCE_SET_NAME
             task.include(RESOURCELIST_PIPELETS_INCLUDE)
             task.exclude(RESOURCELIST_PIPELETS_EXCLUDE)
@@ -118,7 +118,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
 
             task.fileExtension = RESOURCELIST_ORM_EXTENSION
             task.resourceListFileName =
-                String.format("%s/orm/orm.resource", project.name)
+                String.format("resources/%s/orm/orm.resource", project.name)
             task.sourceSetName = SourceSet.MAIN_SOURCE_SET_NAME
             task.include(RESOURCELIST_ORM_INCLUDE)
             task.outputDir.set(
