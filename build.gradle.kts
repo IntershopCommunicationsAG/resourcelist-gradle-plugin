@@ -1,5 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.asciidoctor.gradle.jvm.AsciidoctorTask
-import java.util.Date
 
 /*
  * Copyright 2015 Intershop Communications AG.
@@ -17,10 +17,12 @@ import java.util.Date
  * limitations under the License.
  */
 plugins {
+
     // project plugins
     `java-gradle-plugin`
     groovy
-    kotlin("jvm") version "1.5.21"
+
+    kotlin("jvm") version "1.7.10"
 
     // test coverage
     jacoco
@@ -47,7 +49,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.18.0"
 
     // plugin for publishing to Gradle Portal
-    id("com.gradle.plugin-publish") version "0.15.0"
+    id("com.gradle.plugin-publish") version "1.0.0"
 }
 
 scm {
@@ -66,9 +68,32 @@ repositories {
     mavenCentral()
 }
 
+gradlePlugin {
+    plugins {
+        create("resourcelistPlugin") {
+            id = "com.intershop.gradle.resourcelist"
+            implementationClass = "com.intershop.gradle.resourcelist.ResourceListPlugin"
+            displayName = project.name
+            description = project.description
+        }
+        create("cartridgeResourcelistPlugin") {
+            id =  "com.intershop.gradle.cartridge-resourcelist"
+            implementationClass = "com.intershop.gradle.resourcelist.CartridgeResourceListPlugin"
+            displayName = project.name
+            description = project.description
+        }
+    }
+}
+
+pluginBundle {
+    website = "https://github.com/IntershopCommunicationsAG/${project.name}"
+    vcsUrl = "https://github.com/IntershopCommunicationsAG/${project.name}"
+    tags = listOf("intershop", "build", "resourcelist", "cartridge")
+}
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 // set correct project status
@@ -83,7 +108,7 @@ detekt {
 
 tasks {
     withType<Test>().configureEach {
-        systemProperty("intershop.gradle.versions", "7.2")
+        systemProperty("intershop.gradle.versions", "7.2,7.5.1")
 
         useJUnitPlatform()
 
@@ -96,7 +121,7 @@ tasks {
         dependsOn("jar")
     }
 
-    val copyAsciiDoc = register<Copy>("copyAsciiDoc") {
+    register<Copy>("copyAsciiDoc") {
         includeEmptyDirs = false
 
         val outputDir = file("$buildDir/tmp/asciidoctorSrc")
@@ -144,26 +169,19 @@ tasks {
 
     withType<JacocoReport> {
         reports {
-            xml.getRequired().set(true)
-            html.getRequired().set(true)
+            xml.required.set(true)
+            html.required.set(true)
 
-            html.getOutputLocation().set( File(project.buildDir, "jacocoHtml") )
+            html.outputLocation.set( File(project.buildDir, "jacocoHtml") )
         }
 
         val jacocoTestReport by tasks
         jacocoTestReport.dependsOn("test")
     }
 
-    register<Jar>("sourceJar") {
-        description = "Creates a JAR that contains the source code."
-
-        from(sourceSets.getByName("main").allSource)
-        archiveClassifier.set("sources")
-    }
-
     getByName("jar").dependsOn("asciidoctor")
 
-    val compileKotlin by getting(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class) {
+    withType<KotlinCompile>  {
         kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
@@ -171,34 +189,22 @@ tasks {
         outputDirectory.set(buildDir.resolve("dokka"))
     }
 
-    register<Jar>("javaDoc") {
-        dependsOn(dokkaJavadoc)
-        from(dokkaJavadoc)
-        archiveClassifier.set("javadoc")
-    }
-}
-
-gradlePlugin {
-    plugins {
-        create("resourcelistPlugin") {
-            id = "com.intershop.gradle.resourcelist"
-            implementationClass = "com.intershop.gradle.resourcelist.ResourceListPlugin"
-            displayName = project.name
-            description = project.description
+    withType<Sign> {
+        val sign = this
+        withType<PublishToMavenLocal> {
+            this.dependsOn(sign)
         }
-        create("cartridgeResourcelistPlugin") {
-            id =  "com.intershop.gradle.cartridge-resourcelist"
-            implementationClass = "com.intershop.gradle.resourcelist.CartridgeResourceListPlugin"
-            displayName = project.name
-            description = project.description
+        withType<PublishToMavenRepository> {
+            this.dependsOn(sign)
         }
     }
-}
 
-pluginBundle {
-    website = "https://github.com/IntershopCommunicationsAG/${project.name}"
-    vcsUrl = "https://github.com/IntershopCommunicationsAG/${project.name}"
-    tags = listOf("intershop", "gradle", "plugin", "build", "resourcelist", "cartridge")
+    afterEvaluate {
+        getByName<Jar>("javadocJar") {
+            dependsOn(dokkaJavadoc)
+            from(dokkaJavadoc)
+        }
+    }
 }
 
 publishing {
@@ -206,8 +212,6 @@ publishing {
         create("intershopMvn", MavenPublication::class.java) {
 
             from(components["java"])
-            artifact(tasks.getByName("sourceJar"))
-            artifact(tasks.getByName("javaDoc"))
 
             artifact(File(buildDir, "docs/asciidoc/html5/README.html")) {
                 classifier = "reference"
@@ -265,13 +269,8 @@ signing {
 }
 
 dependencies {
-    compileOnly("org.jetbrains:annotations:22.0.0")
     implementation(gradleKotlinDsl())
 
-    testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.1")
+    testImplementation("com.intershop.gradle.test:test-gradle-plugin:4.1.2")
     testImplementation(gradleTestKit())
-}
-
-repositories {
-    mavenCentral()
 }

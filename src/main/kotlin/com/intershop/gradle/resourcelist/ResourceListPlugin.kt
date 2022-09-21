@@ -60,8 +60,7 @@ open class ResourceListPlugin : Plugin<Project> {
         extension.lists.all { listConfiguration: ListConfiguration ->
             with(project) {
                 plugins.withType(JavaBasePlugin::class.java) {
-                    val javaPluginConvention = extensions.getByType(JavaPluginExtension::class.java)
-                    javaPluginConvention.sourceSets.matching {
+                    extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                         it.name == listConfiguration.sourceSetName
                     }.forEach {sourceSet ->
                         with(listConfiguration) {
