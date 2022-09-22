@@ -68,17 +68,16 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
         // apply the base plugin
         with(project) {
             plugins.withType(JavaBasePlugin::class.java) {
-                val javaPluginConvention = extensions.getByType(JavaPluginExtension::class.java)
-                javaPluginConvention.sourceSets.all {
-                    if(it.name == SourceSet.MAIN_SOURCE_SET_NAME) {
-                        val ptask = configurePipeletResourceTask(project)
-                        val otask = configureOrmResourceTask(project)
+                extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                    it.name == SourceSet.MAIN_SOURCE_SET_NAME
+                }.forEach {
+                    val ptask = configurePipeletResourceTask(project)
+                    val otask = configureOrmResourceTask(project)
 
-                        project.tasks.named(it.processResourcesTaskName, ProcessResources::class.java).configure { t ->
-                            t.from( ptask )
-                            t.from( otask )
-                            t.dependsOn(ptask, otask)
-                        }
+                    project.tasks.named(it.processResourcesTaskName, ProcessResources::class.java).configure { t ->
+                        t.from( ptask )
+                        t.from( otask )
+                        t.dependsOn(ptask, otask)
                     }
                 }
             }
