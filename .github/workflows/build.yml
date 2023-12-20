@@ -39,7 +39,7 @@ jobs:
           SIGNINGPASSWORD: ${{ secrets.SIGNINGPASSWORD }}
         run: |
           gpg --batch --passphrase="$SIGNINGPASSWORD" --pinentry-mode loopback --export-secret-keys $SIGNINGKEYID > $HOME/.gradle/secrets.gpg
-      - name: Create gradle sproperties
+      - name: Create gradle properties
         env:
           APIKEY: ${{ secrets.APIKEY }}
           APISECRET: ${{ secrets.APISECRET }}
@@ -50,6 +50,9 @@ jobs:
         run: echo -e "gradle.publish.key=$APIKEY\ngradle.publish.secret=$APISECRET\nsigning.keyId=$SIGNINGKEYID\nsigning.password=$SIGNINGPASSWORD\nsigning.secretKeyRingFile=$HOME/.gradle/secrets.gpg\nsonatypeUsername=$SONATYPEUSER\nsonatypePassword=$SONATYPEPASSWORD" > $HOME/.gradle/gradle.properties
       - name: Build and test with Gradle
         env:
+          ISHUSERNAME: ${{ secrets.ISHUSERNAME }}
+          ISHKEY: ${{ secrets.ISHKEY }}
+          JAVA_OPTS: "-Xmx1024M -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512M"
           GRADLE_OPTS: "-Dorg.gradle.daemon=true"
         run: ./gradlew test build :publishIntershopMvnPublicationToMavenRepository -s --scan
       - name: Publish Unit Test Results

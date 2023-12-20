@@ -1,9 +1,9 @@
 = ResourceList and Cartridge ResourceList Plugin
-:latestRevision: 4.0.0
+:latestRevision: 5.0.0
 :toc:
 :icons: font
 
-NOTE: Version 4 of this plugin will only work with Gradle 6 and JDK 8.
+NOTE: Version {latestRevision} of this plugin will only work with Gradle 8.5 and JDK 17.
 
 == Summary
 This resourcelist plugin generates, based on existing java source files and resources, a file with the listing of these resources.
