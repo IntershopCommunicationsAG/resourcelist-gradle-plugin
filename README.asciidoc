@@ -145,6 +145,10 @@ This plugin adds an extension *`resourcelist`* to the project.
 |*include* | `String` | Add include filter to excludes list
 |===
 
+== Contribute
+
+See link:https://github.com/IntershopCommunicationsAG/.github/blob/main/CONTRIBUTE.asciidoc[here] for details.
+
 == License
 
 Copyright 2014-2018 Intershop Communications.
