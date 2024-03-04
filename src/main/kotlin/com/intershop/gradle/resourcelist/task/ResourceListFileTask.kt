@@ -205,7 +205,7 @@ abstract class ResourceListFileTask
                     }
                 }
             } else {
-                project.logger.quiet("Collection of files is empty for {}", project.name)
+                project.logger.info("Collection of files is empty for {}", project.name)
             }
         } catch (ex: IOException) {
             throw GradleException("File operation for ${this.name} failed (${ex.message}).")
