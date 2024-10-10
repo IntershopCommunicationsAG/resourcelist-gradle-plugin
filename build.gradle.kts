@@ -106,7 +106,7 @@ testing {
         targets {
             all {
                 testTask.configure {
-                    systemProperty("intershop.gradle.versions", "8.5")
+                    systemProperty("intershop.gradle.versions", "8.5,8.10.2")
                     if(project.hasProperty("repoURL") && project.hasProperty("repoUser") && project.hasProperty("repoPasswd")) {
                         systemProperty("repo_url_config", project.property("repoURL").toString())
                         systemProperty("repo_user_config", project.property("repoUser").toString())
