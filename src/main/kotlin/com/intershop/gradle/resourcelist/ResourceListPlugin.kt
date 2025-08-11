@@ -21,6 +21,7 @@ import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 
 /**
@@ -59,31 +60,31 @@ open class ResourceListPlugin : Plugin<Project> {
     private fun configureResourceListConfigurations(project: Project, extension: ResourceListExtension) {
         extension.lists.all { listConfiguration: ListConfiguration ->
             with(project) {
-                plugins.withType(JavaBasePlugin::class.java) {
-                    extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
-                        it.name == listConfiguration.sourceSetName
-                    }.forEach {sourceSet ->
-                        with(listConfiguration) {
-                            val rtask = tasks.register(taskName, ResourceListFileTask::class.java) { task ->
-                                task.description = TASKDESCRIPTION + name
-                                task.group = RESOURCELIST_TASK_GROUP
+                plugins.apply(JavaPlugin::class.java) // JavaPlugin is required for the ResourceListPlugin
 
-                                task.provideFileExtension(fileExtensionProvider)
-                                task.provideResourceListFileName(resourceListFileNameProvider)
-                                task.provideSourceSetName(sourceSetNameProvider)
-                                task.provideExcludes(excludesProvider)
-                                task.provideIncludes(includesProvider)
-                                task.outputDir.set((outputDirProvider))
+                extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
+                    it.name == listConfiguration.sourceSetName
+                }.forEach { sourceSet ->
+                    with(listConfiguration) {
+                        val rtask = tasks.register(taskName, ResourceListFileTask::class.java) { task ->
+                            task.description = TASKDESCRIPTION + name
+                            task.group = RESOURCELIST_TASK_GROUP
 
-                                sourceSet.output.dir(task.outputs)
-                            }
+                            task.provideFileExtension(fileExtensionProvider)
+                            task.provideResourceListFileName(resourceListFileNameProvider)
+                            task.provideSourceSetName(sourceSetNameProvider)
+                            task.provideExcludes(excludesProvider)
+                            task.provideIncludes(includesProvider)
+                            task.outputDir.set((outputDirProvider))
 
-                            tasks.named(sourceSet.processResourcesTaskName).configure {
-                                it.dependsOn(rtask)
-                            }
+                            sourceSet.output.dir(task.outputs)
                         }
-                        return@forEach
+
+                        tasks.named(sourceSet.processResourcesTaskName).configure {
+                            it.dependsOn(rtask)
+                        }
                     }
+                    return@forEach
                 }
             }
         }
