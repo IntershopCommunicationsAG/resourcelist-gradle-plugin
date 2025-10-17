@@ -647,7 +647,7 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
             }
 
             repositories {
-                jcenter()
+                mavenCentral()
             }
         """.stripIndent()
 

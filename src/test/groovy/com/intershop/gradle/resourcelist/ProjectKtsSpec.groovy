@@ -643,7 +643,7 @@ class ProjectKtsSpec extends AbstractIntegrationKotlinSpec {
             }
 
             repositories {
-                jcenter()
+                mavenCentral()
             }
         """.stripIndent()
 
