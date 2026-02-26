@@ -187,8 +187,8 @@ abstract class ResourceListFileTask
             if (sourcePaths.isNotEmpty()) {
                 targetFile.parentFile.mkdirs()
                 targetFile.createNewFile()
-                File(targetFile.absolutePath).printWriter().use {out ->
-                    sourcePaths.forEach {
+                File(targetFile.absolutePath).printWriter().use { out ->
+                    sourcePaths.sorted().forEach {
                         val entry = it.replace("\\", "/").replaceFirst(".${fileExtension}", "").replace("/", ".")
                         if (logger.isDebugEnabled) {
                             logger.debug("'{}' will be added to list.", entry)
