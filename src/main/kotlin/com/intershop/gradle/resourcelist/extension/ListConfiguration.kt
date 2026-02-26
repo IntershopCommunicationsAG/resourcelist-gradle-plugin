@@ -29,7 +29,7 @@ import java.util.*
 import javax.inject.Inject
 
 /**
- * Configuration of a single resource list artefact.
+ * Configuration of a single resource list artifact.
  *
  * @constructor creates a single configuration container
  * @param name name / id of the configuration
@@ -149,7 +149,7 @@ open class ListConfiguration @Inject constructor(objectFactory: ObjectFactory,
 
     init {
         outputDirProperty.convention(layout.buildDirectory.
-                dir("${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/${name.replace(' ', '_')}").get())
+                dir("${ResourceListExtension.RESOURCELIST_OUTPUTPATH}/${name.replace(' ', '_')}"))
         sourceSetNameProperty.convention(SourceSet.MAIN_SOURCE_SET_NAME)
     }
 
