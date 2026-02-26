@@ -20,7 +20,6 @@ import com.intershop.gradle.resourcelist.extension.ResourceListExtension
 import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 
@@ -76,6 +75,14 @@ open class ResourceListPlugin : Plugin<Project> {
                             task.provideExcludes(excludesProvider)
                             task.provideIncludes(includesProvider)
                             task.outputDir.set((outputDirProvider))
+
+                            // Wire source files from source set with includes/excludes
+                            (sourceSet.resources.srcDirs + sourceSet.allSource.srcDirs).forEach { srcDir ->
+                                task.sourceFiles.from(fileTree(srcDir) {
+                                    it.setIncludes(listConfiguration.includes)
+                                    it.setExcludes(listConfiguration.excludes)
+                                })
+                            }
 
                             sourceSet.output.dir(task.outputs)
                         }

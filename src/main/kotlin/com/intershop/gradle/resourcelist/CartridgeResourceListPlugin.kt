@@ -19,7 +19,6 @@ import com.intershop.gradle.resourcelist.extension.ResourceListExtension.Compani
 import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
@@ -85,6 +84,9 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
     }
 
     private fun configurePipeletResourceTask(project: Project): TaskProvider<ResourceListFileTask> {
+        val java = project.extensions.getByType(JavaPluginExtension::class.java)
+        val mainSourceSet = java.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+
         return project.tasks.register(
             "resourceList${
                 RESOURCELIST_PIPELETS_CONFIG.replaceFirstChar {
@@ -102,11 +104,22 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
             task.exclude(RESOURCELIST_PIPELETS_EXCLUDE)
             task.outputDir.set(
                 project.layout.buildDirectory.dir(
-                    "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_PIPELETS_CONFIG}").get())
+                    "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_PIPELETS_CONFIG}"))
+
+            // Wire source files from source set with includes/excludes
+            (mainSourceSet.resources.srcDirs + mainSourceSet.allSource.srcDirs).forEach { srcDir ->
+                task.sourceFiles.from(project.fileTree(srcDir) {
+                    it.include(RESOURCELIST_PIPELETS_INCLUDE)
+                    it.exclude(RESOURCELIST_PIPELETS_EXCLUDE)
+                })
+            }
         }
     }
 
     private fun configureOrmResourceTask(project: Project): TaskProvider<ResourceListFileTask> {
+        val java = project.extensions.getByType(JavaPluginExtension::class.java)
+        val mainSourceSet = java.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+
         return project.tasks.register("resourceList${
             RESOURCELIST_ORM_CONFIG.replaceFirstChar {
                 if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
@@ -122,7 +135,14 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
             task.include(RESOURCELIST_ORM_INCLUDE)
             task.outputDir.set(
                 project.layout.buildDirectory.dir(
-                    "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_ORM_CONFIG}").get())
+                    "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_ORM_CONFIG}"))
+
+            // Wire source files from source set with includes/excludes
+            (mainSourceSet.resources.srcDirs + mainSourceSet.allSource.srcDirs).forEach { srcDir ->
+                task.sourceFiles.from(project.fileTree(srcDir) {
+                    it.include(RESOURCELIST_ORM_INCLUDE)
+                })
+            }
         }
     }
 }
