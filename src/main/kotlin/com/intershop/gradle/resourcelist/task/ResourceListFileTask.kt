@@ -19,22 +19,27 @@ import com.intershop.gradle.resourcelist.utils.getValue
 import com.intershop.gradle.resourcelist.utils.setValue
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 
 /**
- * This task creates a resource list artefacts
+ * This task creates a resource list artifacts
  * from other files configured with parameters.
  */
+@CacheableTask
 abstract class ResourceListFileTask
     @Inject constructor(objectFactory: ObjectFactory,
                         private val fileSystemOps: FileSystemOperations) : DefaultTask() {
@@ -53,6 +58,17 @@ abstract class ResourceListFileTask
      */
     @get:OutputDirectory
     val outputDir: DirectoryProperty = objectFactory.directoryProperty()
+
+    /**
+     * The source files that are used to generate the resource list.
+     * This should be configured from the plugin with file trees that
+     * include the appropriate include/exclude filters applied.
+     *
+     * @property sourceFiles
+     */
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    val sourceFiles: ConfigurableFileCollection = objectFactory.fileCollection()
 
     /**
      * List of excludes patterns for input directory.
@@ -146,36 +162,6 @@ abstract class ResourceListFileTask
             sourceSetNameProperty.set(sourceSetName)
 
     /**
-     * This is the set of source paths of resources
-     * for the resource list (read only).
-     *
-     * @property sourcePaths
-     */
-    @get:Input
-    val sourcePaths: Set<String> by lazy {
-        val setFilePaths = hashSetOf<String>()
-        try {
-            val java = project.extensions.getByType(JavaPluginExtension::class.java)
-            val srcset = java.sourceSets.findByName(sourceSetName)
-
-            if(srcset != null) {
-                (srcset.resources.srcDirs + srcset.allSource.srcDirs).forEach { srcDir ->
-                    project.fileTree(srcDir) {
-                        it.setIncludes(includes)
-                        it.setExcludes(excludes)
-                    }.files.filter { !it.isDirectory }.forEach { file ->
-                        setFilePaths.add(file.path.substring(srcDir.path.length + 1))
-                    }
-                }
-            }
-        } catch(ex: IllegalStateException) {
-            throw GradleException("It is necessary to apply a Java plugin! (The JavaPluginConvention is missing.)")
-        }
-
-        setFilePaths
-    }
-
-    /**
      * This is logic of the task, that creates
      * the resource list artifact.
      */
@@ -189,13 +175,20 @@ abstract class ResourceListFileTask
             }
         }
 
+        val sourcePaths = mutableSetOf<String>()
+        sourceFiles.asFileTree.visit { fileDetails ->
+            if (!fileDetails.isDirectory) {
+                sourcePaths.add(fileDetails.relativePath.pathString)
+            }
+        }
+
         try {
             //set content
             if (sourcePaths.isNotEmpty()) {
                 targetFile.parentFile.mkdirs()
                 targetFile.createNewFile()
-                File(targetFile.absolutePath).printWriter().use {out ->
-                    sourcePaths.forEach {
+                File(targetFile.absolutePath).printWriter().use { out ->
+                    sourcePaths.sorted().forEach {
                         val entry = it.replace("\\", "/").replaceFirst(".${fileExtension}", "").replace("/", ".")
                         if (logger.isDebugEnabled) {
                             logger.debug("'{}' will be added to list.", entry)
@@ -205,7 +198,7 @@ abstract class ResourceListFileTask
                     }
                 }
             } else {
-                project.logger.info("Collection of files is empty for {}", project.name)
+                logger.info("Collection of files is empty for '{}' (includes: {}, excludes: {})", name, includes, excludes)
             }
         } catch (ex: IOException) {
             throw GradleException("File operation for ${this.name} failed (${ex.message}).")
