@@ -15,7 +15,7 @@
  */
 package com.intershop.gradle.resourcelist
 
-import com.intershop.gradle.resourcelist.extension.ResourceListExtension
+import com.intershop.gradle.resourcelist.extension.CartridgeResourceListExtension
 import com.intershop.gradle.test.AbstractProjectSpec
 import org.gradle.api.Plugin
 import org.gradle.api.plugins.JavaPlugin
@@ -35,5 +35,30 @@ class CartridgeResourceListPluginSpec extends AbstractProjectSpec {
         then:
         project.tasks.findByName('resourceListOrm')
         project.tasks.findByName('resourceListPipelets')
+    }
+
+    def 'should create cartridgeResourceList extension'() {
+        when:
+        project.plugins.apply(JavaPlugin)
+        plugin.apply(project)
+
+        then:
+        project.extensions.findByName('cartridgeResourceList') != null
+        project.extensions.findByType(CartridgeResourceListExtension) != null
+    }
+
+    def 'should allow configuring excludeDirs'() {
+        when:
+        project.plugins.apply(JavaPlugin)
+        plugin.apply(project)
+
+        def ext = project.extensions.getByType(CartridgeResourceListExtension)
+        ext.excludeDirs.add('src/main')
+        ext.excludeDirs.add('build/generated/**')
+
+        then:
+        ext.excludeDirs.get().size() == 2
+        ext.excludeDirs.get().contains('src/main')
+        ext.excludeDirs.get().contains('build/generated/**')
     }
 }

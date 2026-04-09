@@ -619,6 +619,212 @@ class CacheabilityKtsSpec extends AbstractIntegrationKotlinSpec {
     }
 
     // ---------------------------------------------------------------
+    // excludeDirs: cacheability with excluded directories
+    // ---------------------------------------------------------------
+
+    def 'tasks should be cacheable when excludeDirs is configured'() {
+        given:
+        createStandardTestOrmContent()
+        createStandardTestPipeletsContent()
+        createExcludedDirContent()
+
+        buildFile << """
+            ${CARTRIDGE_PLUGIN_CONFIGURATION}
+
+            sourceSets {
+                main {
+                    resources {
+                        srcDir("src/main/excluded-resources")
+                    }
+                }
+            }
+
+            cartridgeResourceList {
+                excludeDirs.add("src/main/excluded-resources")
+            }
+        """.stripIndent()
+
+        when: 'First build populates the build cache'
+        def result1 = getPreparedGradleRunner()
+            .withArguments('resourceListOrm', 'resourceListPipelets', '--build-cache', '-s')
+            .withGradleVersion(gradleVersion)
+            .build()
+
+        then: 'Both tasks execute successfully'
+        result1.task(':resourceListOrm').outcome == SUCCESS
+        result1.task(':resourceListPipelets').outcome == SUCCESS
+        ormResourceFile().exists()
+        pipeletsResourceFile().exists()
+        verifyOrmContent(ormResourceFile())
+        verifyPipeletsContent(pipeletsResourceFile())
+        verifyExcludedContentAbsent(ormResourceFile(), pipeletsResourceFile())
+
+        when: 'Clean and rebuild using the build cache'
+        def result2 = getPreparedGradleRunner()
+            .withArguments('clean', 'resourceListOrm', 'resourceListPipelets', '--build-cache', '-s')
+            .withGradleVersion(gradleVersion)
+            .build()
+
+        then: 'Both tasks are restored from cache'
+        result2.task(':resourceListOrm').outcome == FROM_CACHE
+        result2.task(':resourceListPipelets').outcome == FROM_CACHE
+        ormResourceFile().exists()
+        pipeletsResourceFile().exists()
+        verifyOrmContent(ormResourceFile())
+        verifyPipeletsContent(pipeletsResourceFile())
+        verifyExcludedContentAbsent(ormResourceFile(), pipeletsResourceFile())
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
+    def 'changing a file in an excluded source dir should not cause a cache miss'() {
+        given:
+        createStandardTestOrmContent()
+        createExcludedDirContent()
+
+        buildFile << """
+            ${CARTRIDGE_PLUGIN_CONFIGURATION}
+
+            sourceSets {
+                main {
+                    resources {
+                        srcDir("src/main/excluded-resources")
+                    }
+                }
+            }
+
+            cartridgeResourceList {
+                excludeDirs.add("src/main/excluded-resources")
+            }
+        """.stripIndent()
+
+        when: 'First build populates the cache'
+        def result1 = getPreparedGradleRunner()
+            .withArguments('resourceListOrm', '--build-cache', '-s')
+            .withGradleVersion(gradleVersion)
+            .build()
+
+        then:
+        result1.task(':resourceListOrm').outcome == SUCCESS
+
+        when: 'Modify a file inside the excluded directory'
+        def excludedOrmFile = new File(testProjectDir, 'src/main/excluded-resources/com/intershop/build/test/excluded1.orm')
+        excludedOrmFile << '\n<!-- modified excluded file -->'
+
+        and: 'Clean and rebuild'
+        def result2 = getPreparedGradleRunner()
+            .withArguments('clean', 'resourceListOrm', '--build-cache', '-s')
+            .withGradleVersion(gradleVersion)
+            .build()
+
+        then: 'Task is restored from cache because the excluded dir is not a tracked input'
+        result2.task(':resourceListOrm').outcome == FROM_CACHE
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
+    def 'changing a file in a non-excluded source dir should cause a cache miss when excludeDirs is configured'() {
+        given:
+        createStandardTestOrmContent()
+        createExcludedDirContent()
+
+        buildFile << """
+            ${CARTRIDGE_PLUGIN_CONFIGURATION}
+
+            sourceSets {
+                main {
+                    resources {
+                        srcDir("src/main/excluded-resources")
+                    }
+                }
+            }
+
+            cartridgeResourceList {
+                excludeDirs.add("src/main/excluded-resources")
+            }
+        """.stripIndent()
+
+        when: 'First build populates the cache'
+        def result1 = getPreparedGradleRunner()
+            .withArguments('resourceListOrm', '--build-cache', '-s')
+            .withGradleVersion(gradleVersion)
+            .build()
+
+        then:
+        result1.task(':resourceListOrm').outcome == SUCCESS
+
+        when: 'Modify a file in the non-excluded standard source directory'
+        def standardOrmFile = new File(testProjectDir, 'src/main/resources/com/intershop/build/test/file1.orm')
+        standardOrmFile << '\n<!-- modified -->'
+
+        and: 'Rebuild with build cache (no clean - should detect changed input)'
+        def result2 = getPreparedGradleRunner()
+            .withArguments('resourceListOrm', '--build-cache', '-s')
+            .withGradleVersion(gradleVersion)
+            .build()
+
+        then: 'Task re-executes because a tracked input changed'
+        result2.task(':resourceListOrm').outcome == SUCCESS
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
+    def 'excludeDirs with glob pattern should be cacheable'() {
+        given:
+        createStandardTestOrmContent()
+
+        // Create ORM files in a build/generated directory
+        (1..3).each {
+            File f = file("build/generated/sources/com/intershop/build/test/gen${it}.orm")
+            f.text = """Generated ${it}
+            """.stripIndent()
+        }
+
+        buildFile << """
+            ${CARTRIDGE_PLUGIN_CONFIGURATION}
+
+            sourceSets {
+                main {
+                    resources {
+                        srcDir("build/generated/sources")
+                    }
+                }
+            }
+
+            cartridgeResourceList {
+                excludeDirs.add("build/generated/**")
+            }
+        """.stripIndent()
+
+        when: 'First build populates the cache'
+        def result1 = getPreparedGradleRunner()
+            .withArguments('resourceListOrm', '--build-cache', '-s')
+            .withGradleVersion(gradleVersion)
+            .build()
+
+        then: 'Task executes, standard content present, generated content excluded'
+        result1.task(':resourceListOrm').outcome == SUCCESS
+        ormResourceFile().exists()
+        verifyOrmContent(ormResourceFile())
+        !ormResourceFile().text.contains('gen1')
+
+        when: 'Clean and rebuild from cache'
+        def result2 = getPreparedGradleRunner()
+            .withArguments('clean', 'resourceListOrm', '--build-cache', '-s')
+            .withGradleVersion(gradleVersion)
+            .build()
+
+        then: 'Task restored from cache'
+        result2.task(':resourceListOrm').outcome == FROM_CACHE
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
+    // ---------------------------------------------------------------
     // Custom source directories
     // ---------------------------------------------------------------
 
@@ -743,6 +949,36 @@ class CacheabilityKtsSpec extends AbstractIntegrationKotlinSpec {
             f.text = """TestFile ${it}
             """.stripIndent()
         }
+    }
+
+    void createExcludedDirContent() {
+        File excludedDir = new File(testProjectDir, 'src/main/excluded-resources')
+        (1..3).each {
+            File f = file("com/intershop/build/test/excluded${it}.orm", excludedDir)
+            f.text = """Excluded ORM ${it}
+            """.stripIndent()
+        }
+        (1..3).each {
+            File f = file("com/intershop/build/pipelet/test/excluded${it}.xml", excludedDir)
+            f.text = """Excluded Pipelet ${it}
+            """.stripIndent()
+        }
+    }
+
+    private static boolean verifyExcludedContentAbsent(File ormFile, File pipeletsFile) {
+        if (ormFile.exists()) {
+            String content = ormFile.text
+            (1..3).each {
+                assert !content.contains("excluded${it}")
+            }
+        }
+        if (pipeletsFile.exists()) {
+            String content = pipeletsFile.text
+            (1..3).each {
+                assert !content.contains("excluded${it}")
+            }
+        }
+        return true
     }
 
     private static void copyDirectory(File source, File target) {
