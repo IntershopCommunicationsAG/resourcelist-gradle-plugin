@@ -54,15 +54,15 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
          */
         private const val RESOURCELIST_PIPELETS_CONFIG = "pipelets"
         /**
-         * Settings for orm resource list - include.
+         * Settings for pipelets resource list - include.
          */
         private const val RESOURCELIST_PIPELETS_INCLUDE = "**/pipelet/**/*.xml"
         /**
-         * Settings for orm resource list - exclude.
+         * Settings for pipelets resource list - exclude.
          */
         private const val RESOURCELIST_PIPELETS_EXCLUDE = "**/*_??_??.xml"
         /**
-         * Settings for orm resource list - extension.
+         * Settings for pipelets resource list - extension.
          */
         private const val RESOURCELIST_PIPELETS_EXTENSION = "xml"
     }
