@@ -79,13 +79,13 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
             extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                 it.name == SourceSet.MAIN_SOURCE_SET_NAME
             }.forEach {
-                val ptask = configurePipeletResourceTask(project)
-                val otask = configureOrmResourceTask(project)
+                val pipeletResourceTask = configurePipeletResourceTask(project, extension)
+                val ormResourceTask = configureOrmResourceTask(project, extension)
 
-                project.tasks.named(it.processResourcesTaskName, ProcessResources::class.java).configure { t ->
-                    t.from( ptask )
-                    t.from( otask )
-                    t.dependsOn(ptask, otask)
+                project.tasks.named(it.processResourcesTaskName, ProcessResources::class.java).configure { processResourcesTask ->
+                    processResourcesTask.from(pipeletResourceTask)
+                    processResourcesTask.from(ormResourceTask)
+                    processResourcesTask.dependsOn(pipeletResourceTask, ormResourceTask)
                 }
             }
         }
@@ -110,7 +110,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
                 RESOURCELIST_PIPELETS_CONFIG.replaceFirstChar {
                     if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
                 }
-            }",ResourceListFileTask::class.java) { task ->
+            }", ResourceListFileTask::class.java) { task ->
             task.description = ResourceListPlugin.TASKDESCRIPTION + RESOURCELIST_PIPELETS_CONFIG
             task.group = ResourceListPlugin.RESOURCELIST_TASK_GROUP
 
@@ -151,7 +151,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
             RESOURCELIST_ORM_CONFIG.replaceFirstChar {
                 if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
             }
-        }",ResourceListFileTask::class.java) { task ->
+        }", ResourceListFileTask::class.java) { task ->
             task.description = ResourceListPlugin.TASKDESCRIPTION + RESOURCELIST_ORM_CONFIG
             task.group = ResourceListPlugin.RESOURCELIST_TASK_GROUP
 
