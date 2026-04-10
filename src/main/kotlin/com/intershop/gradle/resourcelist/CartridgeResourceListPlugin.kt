@@ -15,6 +15,7 @@
  */
 package com.intershop.gradle.resourcelist
 
+import com.intershop.gradle.resourcelist.extension.CartridgeResourceListExtension
 import com.intershop.gradle.resourcelist.extension.ResourceListExtension.Companion.RESOURCELIST_OUTPUTPATH
 import com.intershop.gradle.resourcelist.task.ResourceListFileTask
 import org.gradle.api.Plugin
@@ -24,7 +25,9 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.language.jvm.tasks.ProcessResources
-import java.util.*
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.util.Locale
 
 /**
  *  Resourcelist plugin for orm and pipelets resource list artifacts.
@@ -51,15 +54,15 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
          */
         private const val RESOURCELIST_PIPELETS_CONFIG = "pipelets"
         /**
-         * Settings for orm resource list - include.
+         * Settings for pipelets resource list - include.
          */
         private const val RESOURCELIST_PIPELETS_INCLUDE = "**/pipelet/**/*.xml"
         /**
-         * Settings for orm resource list - exclude.
+         * Settings for pipelets resource list - exclude.
          */
         private const val RESOURCELIST_PIPELETS_EXCLUDE = "**/*_??_??.xml"
         /**
-         * Settings for orm resource list - extension.
+         * Settings for pipelets resource list - extension.
          */
         private const val RESOURCELIST_PIPELETS_EXTENSION = "xml"
     }
@@ -68,22 +71,37 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
         with(project) {
             plugins.apply(JavaPlugin::class.java) // JavaPlugin is required for the CartridgeResourceListPlugin
 
+            val extension = extensions.findByType(CartridgeResourceListExtension::class.java) ?: extensions.create(
+                CartridgeResourceListExtension.CARTRIDGE_RESOURCELIST_EXTENSION_NAME,
+                CartridgeResourceListExtension::class.java
+            )
+
             extensions.getByType(JavaPluginExtension::class.java).sourceSets.matching {
                 it.name == SourceSet.MAIN_SOURCE_SET_NAME
             }.forEach {
-                val ptask = configurePipeletResourceTask(project)
-                val otask = configureOrmResourceTask(project)
+                val pipeletResourceTask = configurePipeletResourceTask(project, extension)
+                val ormResourceTask = configureOrmResourceTask(project, extension)
 
-                project.tasks.named(it.processResourcesTaskName, ProcessResources::class.java).configure { t ->
-                    t.from( ptask )
-                    t.from( otask )
-                    t.dependsOn(ptask, otask)
+                project.tasks.named(it.processResourcesTaskName, ProcessResources::class.java).configure { processResourcesTask ->
+                    processResourcesTask.from(pipeletResourceTask)
+                    processResourcesTask.from(ormResourceTask)
+                    processResourcesTask.dependsOn(pipeletResourceTask, ormResourceTask)
                 }
             }
         }
     }
 
-    private fun configurePipeletResourceTask(project: Project): TaskProvider<ResourceListFileTask> {
+    private fun isExcluded(srcDir: Path, excludePatterns: List<String>): Boolean {
+        if (excludePatterns.isEmpty()) {
+            return false
+        }
+
+        return excludePatterns.any {
+            FileSystems.getDefault().getPathMatcher("glob:${it}").matches(srcDir)
+        }
+    }
+
+    private fun configurePipeletResourceTask(project: Project, extension: CartridgeResourceListExtension): TaskProvider<ResourceListFileTask> {
         val java = project.extensions.getByType(JavaPluginExtension::class.java)
         val mainSourceSet = java.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
 
@@ -92,7 +110,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
                 RESOURCELIST_PIPELETS_CONFIG.replaceFirstChar {
                     if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
                 }
-            }",ResourceListFileTask::class.java) { task ->
+            }", ResourceListFileTask::class.java) { task ->
             task.description = ResourceListPlugin.TASKDESCRIPTION + RESOURCELIST_PIPELETS_CONFIG
             task.group = ResourceListPlugin.RESOURCELIST_TASK_GROUP
 
@@ -106,17 +124,26 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
                 project.layout.buildDirectory.dir(
                     "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_PIPELETS_CONFIG}"))
 
-            // Wire source files from source set with includes/excludes
-            (mainSourceSet.resources.srcDirs + mainSourceSet.allSource.srcDirs).forEach { srcDir ->
-                task.sourceFiles.from(project.fileTree(srcDir) {
-                    it.include(RESOURCELIST_PIPELETS_INCLUDE)
-                    it.exclude(RESOURCELIST_PIPELETS_EXCLUDE)
-                })
-            }
+            // Wire non-excluded set of resource + source files from source set with includes/excludes
+            // Exclusion necessary, otherwise Gradle will fail and ask for explicit dependency on tasks
+            // which produced source files which can be completely unrelated
+            val projectDir = project.projectDir.toPath()
+            val excludeDirs = extension.excludeDirs.get()
+            (mainSourceSet.resources.srcDirs + mainSourceSet.allSource.srcDirs)
+                .filterNot { sourceDir ->
+                    val relativeSourceDirPath = projectDir.relativize(sourceDir.toPath())
+                    isExcluded(relativeSourceDirPath, excludeDirs)
+                }
+                .forEach { srcDir ->
+                    task.sourceFiles.from(project.fileTree(srcDir) {
+                        it.include(RESOURCELIST_PIPELETS_INCLUDE)
+                        it.exclude(RESOURCELIST_PIPELETS_EXCLUDE)
+                    })
+                }
         }
     }
 
-    private fun configureOrmResourceTask(project: Project): TaskProvider<ResourceListFileTask> {
+    private fun configureOrmResourceTask(project: Project, extension: CartridgeResourceListExtension): TaskProvider<ResourceListFileTask> {
         val java = project.extensions.getByType(JavaPluginExtension::class.java)
         val mainSourceSet = java.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
 
@@ -124,7 +151,7 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
             RESOURCELIST_ORM_CONFIG.replaceFirstChar {
                 if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
             }
-        }",ResourceListFileTask::class.java) { task ->
+        }", ResourceListFileTask::class.java) { task ->
             task.description = ResourceListPlugin.TASKDESCRIPTION + RESOURCELIST_ORM_CONFIG
             task.group = ResourceListPlugin.RESOURCELIST_TASK_GROUP
 
@@ -137,12 +164,21 @@ open class CartridgeResourceListPlugin : Plugin<Project> {
                 project.layout.buildDirectory.dir(
                     "${RESOURCELIST_OUTPUTPATH}/${RESOURCELIST_ORM_CONFIG}"))
 
-            // Wire source files from source set with includes/excludes
-            (mainSourceSet.resources.srcDirs + mainSourceSet.allSource.srcDirs).forEach { srcDir ->
-                task.sourceFiles.from(project.fileTree(srcDir) {
-                    it.include(RESOURCELIST_ORM_INCLUDE)
-                })
-            }
+            // Wire non-excluded set of resource + source files from source set with includes/excludes
+            // Exclusion necessary, otherwise Gradle will fail and ask for explicit dependency on tasks
+            // which produced source files which can be completely unrelated
+            val projectDir = project.projectDir.toPath()
+            val excludeDirs = extension.excludeDirs.get()
+            (mainSourceSet.resources.srcDirs + mainSourceSet.allSource.srcDirs)
+                .filterNot { sourceDir ->
+                    val relativeSourceDirPath = projectDir.relativize(sourceDir.toPath())
+                    isExcluded(relativeSourceDirPath, excludeDirs)
+                }
+                .forEach { srcDir ->
+                    task.sourceFiles.from(project.fileTree(srcDir) {
+                        it.include(RESOURCELIST_ORM_INCLUDE)
+                    })
+                }
         }
     }
 }

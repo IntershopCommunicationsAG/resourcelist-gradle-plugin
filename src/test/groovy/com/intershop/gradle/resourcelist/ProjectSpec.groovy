@@ -709,6 +709,107 @@ class ProjectSpec extends AbstractIntegrationGroovySpec {
         gradleVersion << supportedGradleVersions
     }
 
+    def 'Test orm and pipelet resource file generation with excluded source dirs'() {
+        given:
+        createStandardTestOrmContent()
+        createStandardTestPipeletsContent()
+
+        // Create additional ORM files in a custom source dir that we will exclude
+        File excludedDir = new File(testProjectDir, 'src/main/excluded-resources')
+        (1..3).each {
+            File f = file("com/corporate/build/test/excluded${it}.orm", excludedDir)
+            f << """TestFile ${it}
+            """.stripIndent()
+        }
+        (1..3).each {
+            File f = file("com/corporate/build/pipelet/test/excluded${it}.xml", excludedDir)
+            f << """TestFile ${it}
+            """.stripIndent()
+        }
+
+        settingsFile << """
+            rootProject.name = "resourcelisttest"
+        """.stripIndent()
+
+        buildFile << """
+            plugins {
+                id 'java'
+                id 'com.intershop.gradle.cartridge-resourcelist'
+            }
+
+            version = '1.0.0'
+
+            sourceSets {
+                main {
+                    resources {
+                        srcDir('src/main/excluded-resources')
+                    }
+                }
+            }
+
+            cartridgeResourceList {
+                excludeDirs.add('src/main/excluded-resources')
+            }
+
+            repositories {
+                mavenCentral()
+            }
+        """.stripIndent()
+
+        when:
+        List<String> jarArgs = ['jar', '-s']
+
+        def resultJar = getPreparedGradleRunner()
+                .withArguments(jarArgs)
+                .withGradleVersion(gradleVersion)
+                .build()
+
+        // check resource file
+        File resourceOrmFile = new File(testProjectDir, 'build/generated/resourcelist/orm/resources/resourcelisttest/orm/orm.resource')
+        File resourcePipeletsFile = new File(testProjectDir, 'build/generated/resourcelist/pipelets/resources/resourcelisttest/pipeline/pipelets.resource')
+
+        boolean ormContentExists = true
+        boolean excludedOrmContentExists = false
+        if (resourceOrmFile.exists()) {
+            String contentOrmTxt = resourceOrmFile.text
+            // Standard ORM files should still be present
+            (1..5).each {
+                ormContentExists &= contentOrmTxt.contains("com.corporate.build.test.file${it}")
+            }
+            // Excluded dir ORM files should NOT be present
+            (1..3).each {
+                excludedOrmContentExists |= contentOrmTxt.contains("com.corporate.build.test.excluded${it}")
+            }
+        }
+
+        boolean pipeletContentExists = true
+        boolean excludedPipeletContentExists = false
+        if (resourcePipeletsFile.exists()) {
+            String contentPipeletsTxt = resourcePipeletsFile.text
+            // Standard pipelet files should still be present
+            (1..5).each {
+                pipeletContentExists &= contentPipeletsTxt.contains("com.corporate.build.pipelet.test.file${it}")
+            }
+            // Excluded dir pipelet files should NOT be present
+            (1..3).each {
+                excludedPipeletContentExists |= contentPipeletsTxt.contains("com.corporate.build.pipelet.test.excluded${it}")
+            }
+        }
+
+        then:
+        resultJar.output.contains(':resourceListOrm')
+        resultJar.output.contains(':resourceListPipelets')
+        resourceOrmFile.exists()
+        resourcePipeletsFile.exists()
+        ormContentExists
+        pipeletContentExists
+        !excludedOrmContentExists
+        !excludedPipeletContentExists
+
+        where:
+        gradleVersion << supportedGradleVersions
+    }
+
     void createStandardTestOrmContent(String projectName = "") {
         def prefix = projectName ? "${projectName}/" : ""
         File src = projectName ? new File(testProjectDir, projectName) : testProjectDir
